@@ -652,7 +652,7 @@ private async void OnSubmit(JsonObject data)
       @Form
     </RadzenRow>
   </RadzenStack>
-} 
+}
 ```
 
 7. Tambahkan button yang mengarah ke halaman settingan dari Dynamic Form
