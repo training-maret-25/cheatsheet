@@ -1,6 +1,6 @@
 # 📌 **GIT WORKFLOW CHEATSHEET**
 
-## **1️⃣ SEBELUM KERJA (Update Branch Sebelum Mulai Coding)**
+## **1️⃣ PAGI pas baru buka VS CODE (Update Branch Sebelum Mulai Coding)**
 
 💻 **Buka laptop → masuk VS Code → buka terminal → pastikan di `main` atau `Staging`.**
 
@@ -36,7 +36,7 @@ git merge main  # atau Staging
 
 👉 **Jika terjadi konflik, selesaikan di VS Code sebelum lanjut kerja!**
 
-## **2️⃣ KETIKA BEKERJA (Commit Setiap Selesai 1 Task, Push Setelah 5 Task)**
+## **2️⃣ KETIKA NGERJAIN TASK (Commit Setiap Selesai 1 Task, Push Setelah 5 Task)**
 
 💡 **Pastikan sekarang ada di branch kerja (`dev_name`)!**
 

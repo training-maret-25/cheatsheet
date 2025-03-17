@@ -1,4 +1,4 @@
-# Dynamic Form
+# 📌 Dynamic Form
 
 Dynamic Form merupakan fitur dimana user dapat menambahkan sebuah atau beberapa field secara dinamis, tanpa perlu melakukan perubahan di <i>source code</i> dan deployment secara manual secara berulang.
 
@@ -158,12 +158,12 @@ namespace Domain.Models
 ```csharp
 namespace Domain.Models
 {
-  public class HeaderTableName : BaseModel // Before (false)
+  public class HeaderTableName : BaseModel // ❌ Before
   {
     ...
 	}
 
-  public class HeaderTableName : ExtendModel // After (true)
+  public class HeaderTableName : ExtendModel // ✅ After
   {
     ...
 	}
@@ -188,7 +188,7 @@ namespace Domain.Abstract.Repository
 }
 ```
 
-4.Buat interface extension pada folder Domain/Abstract/Repository, sebagai contoh
+4.Buat interface extension (`Ext`) `Domain/Abstract/Repository`.
 
 ```csharp
 using Domain.Models;
