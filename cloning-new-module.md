@@ -92,6 +92,8 @@ IFINSCR=http://147.139.191.88:7000/ifinscr/api
 IFINSVY=http://147.139.191.88:7000/ifinsvy/api
 IFINSYS=http://147.139.191.88:7000/ifinsys/api
 ```
+**PERHATIKAN!**  
+`[MODULE_NAME]` diganti dengan nama module, cth: `IFINACC`
 
 ## 🚀 4. Menjalankan Aplikasi
 Setelah menambahkan file `.env`, jalankan aplikasi dengan dua metode: **via terminal** atau **debug mode**.
@@ -105,13 +107,13 @@ Setelah menambahkan file `.env`, jalankan aplikasi dengan dua metode: **via term
   - Di sidebar, buka tab `Run and Debug`  
   ![alt text](./assets/img/run-debug-tab.png)
   - Click button `Rund and Debug`
-  ![alt text](./assets/img/{5F981C31-1DC5-4C5E-AEFD-1275276DD0B1}.png)
+  ![alt text](./assets/img/button-run-debug.png)
   - Pilih `C#`
-  ![alt text](./assets/img/image.png)
+  ![alt text](./assets/img/debug-config.png)
   - Pilih `C#: IFinancing360_CMS_UI [Default Configuration]`
-  ![alt text]({FADA40FA-12A0-406C-84BF-D287956D654C}.png)
+  ![alt text](./assets/img/ui-config-tab.png)
   - *Starting the engine..*
-  ![alt text]({163F3736-476F-4C75-BCD4-E2AAD8EFD935}.png)
+  ![alt text](./assets/img/ui-running.png)
   - Tunggu sampai *Application started..*
   ![alt text](./assets/img/app-started-ui.png)
 
@@ -124,14 +126,14 @@ Setelah menambahkan file `.env`, jalankan aplikasi dengan dua metode: **via term
   - Buka tab `Run and Debug`  
   ![alt text](./assets/img/run-debug-tab.png)
   - Click button `Rund and Debug`
-  ![alt text](./assets/img/{5F981C31-1DC5-4C5E-AEFD-1275276DD0B1}.png)
+  ![alt text](./assets/img/button-run-debug.png)
   - Pilih `C#`
-  ![alt text](./assets/img/image.png)
+  ![alt text](./assets/img/debug-config.png)
   - Pilih `C#: API`
-  ![alt text]({D8B82395-A70B-4014-8AE9-388E5662935E}.png)
+  ![alt text](./assets/img/api-config-tab.png)
   - *Starting the engine..*
-  ![alt text]({163F3736-476F-4C75-BCD4-E2AAD8EFD935}.png)
+  ![alt text](./assets/img/ui-running.png)
   - Tunggu sampai *Application started..*
-  ![alt text](image.png)
+  ![alt text](./assets/img/api-started.png)
   - Ketika API-nya sudah run, `Swagger` akan muncul automatis di web browser (biasanya akan langsung redirect ke browser)
-  ![alt text]({DB945ACD-53E3-4B43-A50B-6B86CA5461CF}.png)
+  ![alt text](./assets/img/api-started.png)
