@@ -2,15 +2,15 @@
 
 Dynamic Form merupakan fitur dimana user dapat menambahkan sebuah atau beberapa field secara dinamis, tanpa perlu melakukan perubahan di <i>source code</i> dan deployment secara manual secara berulang.
 
-## Database
+## 📂 Database Schema
 
-1. Buat tabel `master_form`, `form_controls` di database.
+#### 1️⃣ Buat tabel `master_form`, `form_controls` di database.
 
 Buat table di semua koneksi (PostgreSQL, SQL Server), Jika sudah ada check lagi struktur tablenya
 
 ```sql
 CREATE TABLE master_form (
-	id varchar(50) NOT NULL,
+  id varchar(50) NOT NULL,
   ukey bigserial NOT NULL,
   cre_date timestamp NOT NULL,
   cre_by varchar(50) NOT NULL,
@@ -18,8 +18,8 @@ CREATE TABLE master_form (
   mod_date timestamp NOT NULL,
   mod_by varchar(50) NOT NULL,
   mod_ip_address varchar(50) NULL,
-	"name" varchar(50) NOT NULL,
-	"label" varchar(50) NOT NULL,
+  "name" varchar(50) NOT NULL,
+  "label" varchar(50) NOT NULL,
   is_active int4 NULL,
   display_order int4 NULL,
   code varchar(10) NULL,
@@ -56,32 +56,38 @@ CREATE TABLE form_controls (
 );
 ```
 
-2.Buat tabel extension(ext) pada form/header yang akan meng-implement fitur ini. Untuk format penamaan table: `< header_table_name > _ext`, contoh: menu "Client Personal Info"(table: `client_personal_info_ext`)
+#### 2️⃣ Buat tabel extension(ext).
+
+Buat berdasarkan form/header yang akan meng-implement fitur ini. Format nama table: `[header_table_name]_ext`, contoh: menu "Client Personal Info" (table: `client_personal_info_ext`)
 
 ```sql
-CREATE TABLE header_table_ext (
-	id varchar(50) NOT NULL,
+CREATE TABLE [header_table_name]_ext (
+  id varchar(50) NOT NULL,
   cre_date timestamp NOT NULL,
   cre_by varchar(15) NOT NULL,
   cre_ip_address varchar(15) NOT NULL,
   mod_date timestamp NOT NULL,
   mod_by varchar(15) NOT NULL,
   mod_ip_address varchar(15) NOT NULL,
-  header_table_id varchar(50) NOT NULL,
-	"keyy" varchar(50) NULL,
+  --
+  [header_table_name]_id varchar(50) NOT NULL,
+  "keyy" varchar(50) NULL,
   value varchar(50) NULL,
-  CONSTRAINT pk_header_table_ext_id PRIMARY KEY (id),
-  CONSTRAINT fk_header_table_ext_masterbencmark_id FOREIGN KEY (header_table_id) REFERENCES header_table(id)
+  --
+  CONSTRAINT pk_[header_table_name]_ext_id PRIMARY KEY (id),
+  CONSTRAINT fk_[header_table_name]_ext_masterbencmark_id FOREIGN KEY ([header_table_name]_id) REFERENCES [header_table_name](id)
 );
 ```
 
-## Backend/API
+## ⚙️ Backend/API
 
-### Domain Layer
+### 🌍 Domain Layer
 
-1.Tambahkan class MasterForm, FormControls, FormDropdown, dan ExtendModel pada folder `Models`. Jika sudah ada, tidak perlu ditambahkan.
+#### 1️⃣ Tambahkan model `MasterForm`, `FormControls`, dan `ExtendModel`
 
-- MasterForm
+Class model berada pada folder `Domain/Abstract/Models`. Jika sudah ada, tidak perlu ditambahkan.
+
+- `MasterForm`
 ```csharp
 namespace Domain.Models
 {
@@ -95,7 +101,7 @@ namespace Domain.Models
 }
 ```
 
--FormControls
+- `FormControls`
 ```csharp
 namespace Domain.Models
 {
@@ -121,7 +127,7 @@ namespace Domain.Models
 }
 ```
 
--ExtendModel
+- `ExtendModel`
 ```csharp
 using System.Dynamic;
 namespace Domain.Models
@@ -153,24 +159,28 @@ namespace Domain.Models
 }
 ```
 
-2.Pada header class yang ingin mengimplementasi fitur ini, inheritnya diubah dari BaseModel menjadi ExtendModel. Sebagai contoh Client Personal Info
+#### 2️⃣ Ubah inherit dari `BaseModel` menjadi `ExtendModel`.
+
+Pada header class yang ingin mengimplementasi fitur ini, inheritnya diubah dari `BaseModel` menjadi `ExtendModel`. Contoh : di model `ClientPersonalInfo`.
 
 ```csharp
 namespace Domain.Models
 {
-  public class HeaderTableName : BaseModel // ❌ Before
+  public class ClientPersonalInfo : BaseModel // ❌ Before
   {
     ...
-	}
+  }
 
-  public class HeaderTableName : ExtendModel // ✅ After
+  public class [HeaderTableName] : ExtendModel // ✅ After
   {
     ...
-	}
+  }
 }
 ```
 
-3.Buat sebuah interface dengan nama `IBaseExtRepository` pada folder Domain/abstract/ repository sebagai berikut :
+#### 3️⃣ Interface Repository : `IBaseExtRepository`
+
+Buat **interface repository** baru di folder `Domain/Abstract/Repository`
 
 ```csharp
 using Domain.Models;
@@ -188,7 +198,9 @@ namespace Domain.Abstract.Repository
 }
 ```
 
-4.Buat interface extension (`Ext`) `Domain/Abstract/Repository`.
+#### 4️⃣ Interface Repository untuk Tabel Ekstensi  
+
+Buat **interface repository** untuk tabel ekstensi dari header yang mengimplementasikan fitur Dynamic Form. Interface ini inherit ke `IBaseExtRepository<ExtendModel>` dan berada di folder `Domain/Abstract/Repository`.
 
 ```csharp
 using Domain.Models;
@@ -196,11 +208,13 @@ using System.Data;
 
 namespace Domain.Abstract.Repository
 {
-  public interface I[HeaderTableName] ExtRepository : IBaseExtRepository<ExtendModel> { }
+  public interface I[HeaderTableName]ExtRepository : IBaseExtRepository<ExtendModel> { }
 }
 ```
 
-5.Pada Interface Abstract/Service tambahkan Method GetRowForParent, sebagai contoh ClientPersonalInfo
+#### 4️⃣ Method `GetRowForParent`
+
+Tambahkan method `GetRowForParent` pada **interface service** dari header yang berada di `Domain/Abstract/Service`. Contoh : service `ClientPersonalInfoService`
 
 ```csharp
 using Domain.Models;
@@ -209,18 +223,17 @@ namespace Domain.Abstract.Service
 {
   public interface IClientPersonalInfoService : IBaseService<ClientPersonalInfo>
   {
-    Task<ClientPersonalInfo> GetRowByClientID(string clientID);
-    Task<List<ClientPersonalInfo>> GetRowsForMatching(string? keyword, int offset, int limit, string fullName, string motherMaidenName, DateTime dateOfBirth, string placeOfBirth, string clientDocumentNo, string clientDocumentType);
+    ...
+
     Task<List<ExtendModel>> GetRowForParent(string ParentID);
   }
 }
 ```
+---
 
-### Data Access Layer (DAL) / Repository
+### 📂 Data Access Layer (DAL) / Repository
 
-1.Buat sebuah class dengan imbuhan Ext, sebagai contoh jika kita menambahkan fitur pada ClientPersonalInfo, maka kita membuatnya ClientPersonalInfoExtRepository.cs
-
-2. Implement Interface pada class yang kita buat sebelumnya menjadi seperti dibawah ini
+Buat **class repository** sebagai ekstensi dari tabel header dengan format nama `[HeaderTableName]ExtRepository` (contoh: `ClientPersonalInfoExtRepository`). Letakkan class ini di folder `DAL/` dan implementasikan interface yang telah kita buat sebelumnya.
 
 ```csharp
 using System.Data;
@@ -302,7 +315,7 @@ namespace DAL
     {
       var p = db.Symbol();
 
-    string query = $@"
+      string query = $@"
         update {tableName}
         set
           mod_date        = {p}ModDate
@@ -316,16 +329,17 @@ namespace DAL
           keyy = {p}Keyy";
 
       return await _command.Update(transaction, query, model);
+    }
+    #endregion
   }
-  #endregion
-}
 }
 
 ```
 
-### Service Layer
+### 🔧 Service Layer
 
-1.Pada Class yang implement fitur ini tambahkan method/function InsertExt, UpdateExt, dan GetRowForParent(method ini adalah implement dari interface)
+#### 1️⃣ Buat `InsertExt`, `UpdateExt`, dan `GetRowForParent`
+Tambahkan pada **service** header yang meng-*implement* fitur Dynamic From ini. `InsertExt` dan `UpdateExt` dibuat sebagai private method dan `GetRowForParent` diimplementasikan sesuai dengan interface.
 
 ```csharp
 #region InsertExt
@@ -444,7 +458,9 @@ public async Task<List<ExtendModel>> GetRowForParent(string clientID)
 #endregion
 ```
 
-2.Method InsertExt, dan UpdateExt dipanggil di function insert dan update sebagai berikut :
+#### 2. Panggil method `InsertExt` dan `UpdateExt` 
+
+Setelah 2 methodnya dibuat, panggil method `InsertExt()` di dalam `Insert()` dan `UpdateExt()` di dalam `Update()`.
 
 - `Insert`
 
@@ -511,7 +527,7 @@ public async Task<int> UpdateByID(...)
 }
 ```
 
-### API Layer / Controller
+### 🎮 API Layer / Controller
 
 1.Tambahkan function ini pada controller yang implement fitur ini, fungsinya jika dynamic form diisi maka nilainya diambil dari function ini
 
@@ -531,7 +547,7 @@ public async Task<ActionResult> GetRowByExt(string ID)
 }
 ```
 
-## UI
+## 🎨 UI
 
 1.Tambahkan properti ini pada UI logic class (`.cs`)
 
