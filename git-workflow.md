@@ -53,6 +53,9 @@ git status
 ```sh
 [branch: magang_name]
 
+dotnet build
+# Pastikan tidak muncul error, jika ada beresin sebelum commit
+
 git add .
 git commit -m "Feat: Menambahkan fitur login"
 git commit -m "Fix: Memperbaiki bug pada validasi input"
@@ -80,6 +83,9 @@ git push origin magang_name
 ```sh
 [branch: magang_name]
 
+dotnet build
+# Pastikan tidak muncul error, jika ada beresin sebelum commit
+
 git add .
 git commit -m "Feat: Final update untuk task hari ini"
 git push origin magang_name
@@ -93,11 +99,14 @@ git push origin magang_name
 # Pindah ke Staging
 git switch Staging
 
+# Merge branch magang_name ke Staging
+git merge magang_name
+
 # Tarik update terbaru sebelum merge
 git pull origin Staging
 
-# Merge branch magang_name ke Staging
-git merge magang_name
+dotnet build
+# Pastikan tidak muncul error, jika ada beresin sebelum commit
 
 # Cek status terakhir
 git status
@@ -127,5 +136,5 @@ git push origin Staging
 ✅ **Sebelum merge, selalu pull update terbaru dari remote biar nggak konflik.**  
 ✅ **Kalau ada konflik, selesaikan di VS Code sebelum push.**  
 ✅ **Commit setiap selesai 1 task, tapi push setelah 5 task!**  
-✅ **Gunakan format commit message yang benar (`Feat | Fix | Refactor: <pesan commit>`)**  
-✅ **Sebelum pulang, pastikan semua sudah di-push & di-merge.**
+✅ **Gunakan format commit message yang benar (`Feat | Fix | Refactor: <pesan commit> | Merge from [branch_name] by [your_name] at [dd/MM/yyyy-hh:MM]`)**  
+✅ **Sebelum pulang, pastikan semua sudah di-merge & di-push.**
