@@ -215,7 +215,7 @@ namespace Domain.Abstract.Repository
 }
 ```
 
-#### 4️⃣ Method `GetRowForParent`
+#### 5️⃣ Method `GetRowForParent`
 
 Tambahkan method `GetRowForParent` pada **interface service** dari header yang berada di `Domain/Abstract/Service`. Contoh : service `ClientPersonalInfoService`
 
@@ -339,6 +339,8 @@ namespace DAL
 }
 
 ```
+
+---
 
 ### 🔧 Service Layer
 
@@ -473,7 +475,7 @@ public async Task<List<ExtendModel>> GetRowForParent(string clientID)
 #endregion
 ```
 
-#### 2. Panggil method `InsertExt` dan `UpdateExt`
+#### 2️⃣ Panggil method `InsertExt` dan `UpdateExt`
 
 Setelah 2 methodnya dibuat, panggil method `InsertExt()` di dalam `Insert()` dan `UpdateExt()` di dalam `Update()`.
 
@@ -542,6 +544,8 @@ public async Task<int> UpdateByID(...)
 }
 ```
 
+---
+
 ### 🎮 API Layer / Controller
 
 #### Tambahkan Function untuk Mengambil Data Dynamic Form
@@ -565,6 +569,8 @@ public async Task<ActionResult> GetRowByExt(string ID)
 ```
 
 ## 🎨 UI
+
+### 🔢 Code
 
 #### 1️⃣ Tambahkan Properti pada UI Logic Class dari Form Component
 
@@ -607,26 +613,31 @@ Tambahkan pemanggilan method `LoadMasterForm` dan `LoadFormControls` pada `OnPar
 ```csharp
 protected override async Task OnParameterSetAsync()
 {
-    masterForm = await LoadMasterForm("CR");
-    controls = await LoadFormControls(masterForm["ID"]?.GetValue<string>());
+  masterForm = await LoadMasterForm("CR");  // Ganti "CR" dengan code yang didaftarkan di Dynamic Form Setting.
+  // Di Dynamic Form Setting, Code diisi singkatan dari nama sub menu
+  // Code: diisi singkatan dari nama sub menu
+  // Name: nama submenu dengan format PascalCase (gaada spasi)
+  // Label: nama submenu tambah "Info"
 
-    if (ClientID != null)
-    {
-        await GetRow();
+  controls = await LoadFormControls(masterForm["ID"]?.GetValue<string>());
 
-        var extRes = await IFINCMSClient.GetRows<ExtendModel>("ClientPersonalInfo", "GetRowByExt", new { ID = ClientID });
-        extend = extRes?.Data;
+  if (ClientID != null)
+  {
+    await GetRow();
 
-        AddExtendProperty(controls, extend, row);
-    }
-    else
-    {
-        row = new JsonObject();
-        row["Properties"] = JsonValue.Create(controls.ToDictionary(x => x.Name, x => x.Value));
-    }
+    var extRes = await IFINCMSClient.GetRows<ExtendModel>("ClientPersonalInfo", "GetRowByExt", new { ID = ClientID });
+    extend = extRes?.Data;
 
-    SetInitialValue(row, controls);
-    await base.OnInitializedAsync();
+    AddExtendProperty(controls, extend, row);
+  }
+  else
+  {
+    row = new JsonObject();
+    row["Properties"] = JsonValue.Create(controls.ToDictionary(x => x.Name, x => x.Value));
+  }
+
+  SetInitialValue(row, controls);
+  await base.OnInitializedAsync();
 }
 ```
 
@@ -717,3 +728,30 @@ private void GoToSetting()
 }
 #endregion
 ```
+
+### 🏷️ **Role code**
+
+Bagian ini menjelaskan cara mendaftarkan **Role Code** untuk **button** di sistem.
+
+#### **Langkah-langkah Pendaftaran Role Code**
+
+1. **Buka portal iFinancing360** dan masuk ke modul **Config - IFINSYS**.
+2. Navigasikan ke **System Setting** > **Tab Menu**.
+3. Pilih **Module**: **"Config - IFINSYS"**.  
+   ![Module Lookup](assets/img/button-module-lookup.png)  
+   ![Module Lookup](assets/img/module-lookup.png)
+4. Pilih **Parent** yang sesuai dengan menu tempat fitur **Dynamic Form** berada.  
+   ![Parent Lookup](assets/img/button-parent-lookup.png)
+5. Pilih **Sub Menu** tempat fitur **Dynamic Form** berada, lalu masuk ke **detail**.  
+   ![Submenu Lookup](assets/img/data-submenu.png)
+6. Setelah masuk ke halaman detail, klik tombol **Add** di **Role List**.  
+   ![Add Role List](assets/img/button-add-role-list.png)
+7. Masukkan data yang diperlukan, lalu klik **Simpan**.  
+   ![Detail Role Code](assets/img/detail-rolecode.png)
+8. **Salin** Role Code yang tergenerate secara otomatis.  
+   ![Role Code Field](assets/img/role-code-field.png)
+9. **Tempelkan** Role Code yang sudah disalin ke dalam kode sebagai berikut:
+
+    ```razor
+    <RoleAccess Code="RC0001983"> ... </RoleAccess>
+    ```
