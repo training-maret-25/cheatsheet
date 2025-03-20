@@ -51,6 +51,7 @@ CREATE TABLE form_controls (
   is_active int4 NOT NULL,
   display_order int4 NULL,
   "name" varchar(50) NULL,
+  numeric_format varchar(10) NULL,
   CONSTRAINT pk_form_controls_id PRIMARY KEY (id),
   CONSTRAINT fk_form_controls_master_form_id FOREIGN KEY (master_form_id) REFERENCES master_form(id)
 );
@@ -124,6 +125,7 @@ namespace Domain.Models
     public int? IsActive { get; set; }
     public string? Name { get; set; }
     public int? DisplayOrder { get; set; }
+    public string? NumericFormat { get; set; }
     public Dictionary<string, string>? Items { get; set; }
   }
 }
