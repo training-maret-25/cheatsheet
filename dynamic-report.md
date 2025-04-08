@@ -18,10 +18,7 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Journal Transaction</title>
         <style>
             body {
@@ -412,15 +409,16 @@ public async Task<string> GetHTMLPreview(string Code, string CompanyName, List<J
 ```
 
 keterangan:
-- table atas
-![alt text](/assets/img/dynamic-report/table-atas-contoh.png)
 
-- table bawah
-![alt text](assets/img/dynamic-report/table-bawah-contoh.png)
+-   table atas
+    ![alt text](/assets/img/dynamic-report/table-atas-contoh.png)
 
+-   table bawah
+    ![alt text](assets/img/dynamic-report/table-bawah-contoh.png)
 
-- controller
-ingat ini hanya contoh
+-   controller
+    ingat ini hanya contoh
+
 ```cs
 [HttpGet("GetHTMLPreview")]
 public async Task<ActionResult> GetPreview(string ReffNo)
@@ -448,8 +446,28 @@ public async Task<ActionResult> GetPreview(string ReffNo)
   }
 }
 ```
+
 notes: dalam kasus tertentu tidak harus menggunakan `_internalAPIClient`, itu hanya diperlukan ketika butuh ngambil/tarik data dari module lain
 
 -   tambahin button di UI
-sekarang ke UI, tambahkan component button dan functionnya (untuk ambil template yang sudah diisi data)
+    sekarang ke UI, tambahkan component button dan functionnya (untuk ambil template yang sudah diisi data)
 
+```razor
+<ButtonPreview Text="Print Voucher" Icon="Print" ButtonStyle="ButtonStyle.Info" Template="@GetHTMLForPreview" PrintAs="Print" />
+```
+
+```cs
+#region Preview report
+private async Task<string> GetHTMLForPreview()
+{
+    Loading.Show();
+
+    var result = await IFINFINClient.GetRow("JournalGlLinkTransaction", "GetHTMLPreview", new { ReffNo = row["Code"]?.GetValue<string>() });
+    string html = result?.Data["HTML"]?.GetValue<string>();
+
+    Loading.Close();
+
+    return html;
+}
+#endregion
+```
