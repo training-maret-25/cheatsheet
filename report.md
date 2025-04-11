@@ -1,3 +1,70 @@
+1. Buat datagrid component
+   Jadi report itu dikumpulkan jadi 1 list per module (Report -> Transaction). Pertama, check dulu apakah di module itu sudah ada submenu `Transaction` dalam menu `Report`.
+
+Jika belum ada, berikut langkah-langkah buat halaman list:
+
+-   daftarin roleaccess di Config (IFINSYS)
+    ![alt text](report-list-menuinfo.png)
+    ![alt text](report-list-rolecode.png)
+
+-   buat componentnya
+    ![alt text](component-explorer.png)
+
+
+```razor
+<RadzenStack Gap="16">
+  <DataGrid ID="TransactionDataGrid" @ref="@dataGrid" TItem="JsonObject" LoadData="LoadData" AllowSelected="true"
+    RowLink=@((row) => $"/systemsetting/menu/{row["ReportCode"]?.ToString()}")>
+    <!-- #region Columns -->
+    <Columns>
+      <DataGridColumn TItem="JsonObject" Property="ReportName" Title="Report Name" Width="100%" />
+    </Columns>
+    <!-- #endregion -->
+  </DataGrid>
+</RadzenStack>
+```
+
+```cs
+using System.Text.Json.Nodes;
+using iFinancing360.UI.Components;
+using iFinancing360.UI.Helper.APIClient;
+using Microsoft.AspNetCore.Components;
+
+namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
+{
+  public partial class TransactionDataGrid
+  {
+    #region Service
+    [Inject] IFINSYSClient IFINSYSClient { get; set; } = null!;
+    #endregion
+
+    #region Component field
+    DataGrid<JsonObject> dataGrid = null!;
+    #endregion
+
+    #region LoadData
+    protected async Task<List<JsonObject>?> LoadData(DataGridLoadArgs args)
+    {
+      var res = await IFINSYSClient.GetRows<JsonObject>("SysUserMainReport", "GetRows", new { args.Keyword, args.Offset, args.Limit, userID = GetCurrentUser() });
+
+      return res?.Data;
+    }
+    #endregion
+  }
+}
+```
+
+2. Buat form component
+Per masing-masing report itu pasti punya halaman form yang berisi filter untuk data yang akan dicetak.
+
+```razor
+
+```
+
+3. buat list dan form page, lalu masukan component berdasarkan report code
+
+---
+
 -   tambahin template HTML
     Disclaimer: emplate ini sebagai contoh, karena tampilan di previewnya nanti bisa berbeda tergantung request/kebutuhan
 
