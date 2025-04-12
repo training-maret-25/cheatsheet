@@ -10,7 +10,6 @@ Jika belum ada, berikut langkah-langkah buat halaman list:
 -   buat componentnya
     ![alt text](component-explorer.png)
 
-
 ```razor
 <RadzenStack Gap="16">
   <DataGrid ID="TransactionDataGrid" @ref="@dataGrid" TItem="JsonObject" LoadData="LoadData" AllowSelected="true"
@@ -55,13 +54,161 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
 ```
 
 2. Buat form component
-Per masing-masing report itu pasti punya halaman form yang berisi filter untuk data yang akan dicetak.
+   Per masing-masing report itu pasti punya halaman form yang berisi filter untuk data yang akan dicetak.
 
 ```razor
+<TemplateForm Submit="OnPrintReport">
+  <RadzenStack Gap="16">
+    <!-- #region Toolbar -->
+    <RadzenRow Gap="8">
+      <RoleAccess Code="">
+        <Button ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Print" />
+      </RoleAccess>
 
+      <Button ButtonStyle="ButtonStyle.Danger" Text="Back" Click="Back" />
+    </RadzenRow>
+    <!-- #endregion -->
+
+    <RadzenStack Gap="8">
+      <RadzenRow Gap="32">
+
+
+      <!-- !!! Just Template !!! -->
+
+      <!-- #region Accounting Period -->
+        <FormFieldDatePicker Label="Accounting Period" Name="AccountingPeriod" Value=@(row["AccountingPeriod"]?.GetValue<DateTime>()) Required />
+      <!-- #endregion -->
+
+      <!-- #region Account No -->
+      <FormFieldTextBox Label="Account No" Name="AccountNo" Value=@(row["AccountNo"]?.GetValue<string>()) Required />
+      <!-- #endregion -->
+
+      <!-- !!! Just Template !!! -->
+
+
+      </RadzenRow>
+    </RadzenStack>
+  </RadzenStack>
+</TemplateForm>
 ```
 
+> Notes: Untuk inputan bisa berubah sesuai dengan filter per masing-masing filter (lihat di google sheet)
+
+```cs
+using System.Text.Json.Nodes;
+using iFinancing360.UI.Helper.APIClient;
+using Microsoft.AspNetCore.Components;
+
+namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
+{
+  public partial class TrialBalanceForm
+  {
+    #region Service
+    [Inject] IFINSYSClient IFINSYSClient { get; set; } = null!;
+    #endregion
+
+    #region Parameter
+    [Parameter, EditorRequired] public string? ReportCode { get; set; }
+    #endregion
+
+    #region Component field
+    #endregion
+
+    #region Class field
+    private const string BASE_PATH = "/base/path";
+
+    public JsonObject row = [];
+    #endregion
+
+    #region API Controllers & routes
+    //controllers
+    private string APIController = "";
+    //routes
+    private string APIRouteFor = "";
+    #endregion
+
+    #region OnInit
+    protected override async Task OnParametersSetAsync()
+    {
+
+      await base.OnParametersSetAsync();
+    }
+    #endregion
+
+    #region Back
+    public void Back()
+    {
+      NavigationManager.NavigateTo(BASE_PATH);
+    }
+    #endregion
+
+    #region OnPrintReport
+    public async Task OnPrintReport(JsonObject data)
+    {
+      Loading.Show();
+
+      data = SetAuditInfo(data);
+      data = row.Merge(data);
+
+      Loading.Close();
+      StateHasChanged();
+    }
+    #endregion
+  }
+}
+```
+
+> Notes: Component di atas dibuat baru, sehingga kemungkinan besar tidak ditambahkan
+
 3. buat list dan form page, lalu masukan component berdasarkan report code
+
+-   buat list page dulu
+    ![alt text](report-list-page.png)
+
+```razor
+@page "/report/reporttransaction"
+
+@using IFinancing360_ACC_UI.Components.Report.TransactionComponent
+
+<ReleaseLock />
+
+<Title Text="Report Transaction" />
+
+<RoleAccess Code="">
+  <PageContainer>
+    <TransactionDataGrid />
+  </PageContainer>
+</RoleAccess>
+```
+
+-   buat info page  
+    ![alt text](report-info-page.png)
+    untuk component yang dirender akan tergantung pada **report code** yang diberikan lewat **route param**
+
+```razor
+@page "/report/reporttransaction/{ReportCode}"
+
+@using IFinancing360_ACC_UI.Components.Report.TrialBalanceReportComponent
+
+<Title Text="" />
+
+<RoleAccess Code="">
+  <PageContainer>
+
+    @if (ReportCode == "trial_balance")
+    {
+      <TrialBalanceReportForm ReportCode=@ReportCode />
+    } else {
+      @* Kondisi kedua dan seterusnya *@
+    }
+
+  </PageContainer>
+</RoleAccess>
+
+@code {
+  [Parameter] public string? ReportCode { get; set; }
+}
+```
 
 ---
 
@@ -85,7 +232,10 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
         <title>Journal Transaction</title>
         <style>
             body {
