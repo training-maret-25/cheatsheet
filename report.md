@@ -1,27 +1,55 @@
-1. Buat datagrid component
-   Jadi report itu dikumpulkan jadi 1 list per module (Report -> Transaction). Pertama, check dulu apakah di module itu sudah ada submenu `Transaction` dalam menu `Report`.
+## 📄 Langkah Implementasi Report
 
-Jika belum ada, berikut langkah-langkah buat halaman list:
+### 1. Buat `DataGrid` Component
 
--   daftarin roleaccess di Config (IFINSYS)
-    ![alt text](report-list-menuinfo.png)
-    ![alt text](report-list-rolecode.png)
+**Tujuan:** Menampilkan daftar report berdasarkan modul (misalnya `Report > Transaction`).
 
--   buat componentnya
-    ![alt text](component-explorer.png)
+#### 🔍 Cek Submenu
+
+-   Pastikan sudah ada submenu `Transaction` di menu `Report`.
+-   Kalau belum, ikuti langkah-langkah berikut:
+
+#### 🧾 Daftarin Role Access
+
+-   Tambahkan konfigurasi akses di **Config (IFINSYS)**.
+    -   Contoh:
+        ![alt text](/assets/img/report/report-list-menuinfo.png)
+        ![alt text](/assets/img/report/report-list-rolecode.png)
+
+#### ⚙️ Buat Komponen `DataGrid`
+
+**Struktur folder:**
+
+```txt
+Components
+└── Report
+    └── TransactionComponent
+        └── TransactionDataGrid.razor / .razor.cs
+```
+
+`
+![alt text](/assets/img/report/component-explorer.png)
+
+##### TransactionDataGrid.razor
 
 ```razor
 <RadzenStack Gap="16">
-  <DataGrid ID="TransactionDataGrid" @ref="@dataGrid" TItem="JsonObject" LoadData="LoadData" AllowSelected="true"
-    RowLink=@((row) => $"/systemsetting/menu/{row["ReportCode"]?.ToString()}")>
-    <!-- #region Columns -->
+  <DataGrid ID="TransactionDataGrid"
+            @ref="@dataGrid"
+            TItem="JsonObject"
+            LoadData="LoadData"
+            AllowSelected="true"
+            RowLink=@((row) => $"/systemsetting/menu/{row["ReportCode"]?.ToString()}/{ParamReportName}")>
+
     <Columns>
       <DataGridColumn TItem="JsonObject" Property="ReportName" Title="Report Name" Width="100%" />
     </Columns>
-    <!-- #endregion -->
+
   </DataGrid>
 </RadzenStack>
 ```
+
+##### TransactionDataGrid.razor.cs
 
 ```cs
 using System.Text.Json.Nodes;
@@ -41,6 +69,12 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
     DataGrid<JsonObject> dataGrid = null!;
     #endregion
 
+    #region Variables
+    public string ParamReportName {
+        get => string.Join('_', row["ReportName"]?.GetValue<string>().Split(' ', StringSplitOptions.Empty));
+    }
+    #endregion
+
     #region LoadData
     protected async Task<List<JsonObject>?> LoadData(DataGridLoadArgs args)
     {
@@ -53,8 +87,12 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
 }
 ```
 
-2. Buat form component
-   Per masing-masing report itu pasti punya halaman form yang berisi filter untuk data yang akan dicetak.
+---
+
+### 2. Buat `Form` Component
+
+**Tujuan:** Menyediakan halaman filter/form berdasarkan `ReportCode`.
+Per masing-masing report itu pasti punya halaman form yang berisi filter untuk data yang akan dicetak.
 
 ```razor
 <TemplateForm Submit="OnPrintReport">
@@ -62,7 +100,12 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
     <!-- #region Toolbar -->
     <RadzenRow Gap="8">
       <RoleAccess Code="">
-        <Button ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Print" />
+        <ButtonPreview
+            ButtonStyle="ButtonStyle.Info"
+            Text="Print Voucher"
+            Icon="Print"
+            Template="@GetReportHTML"
+            PrintAs="ReportPrint" />
       </RoleAccess>
 
       <Button ButtonStyle="ButtonStyle.Danger" Text="Back" Click="Back" />
@@ -73,7 +116,7 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
       <RadzenRow Gap="32">
 
 
-      <!-- !!! Just Template !!! -->
+      <!-- !!! Cuma Template (bisa dihapus) !!! -->
 
       <!-- #region Accounting Period -->
         <FormFieldDatePicker Label="Accounting Period" Name="AccountingPeriod" Value=@(row["AccountingPeriod"]?.GetValue<DateTime>()) Required />
@@ -83,7 +126,7 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
       <FormFieldTextBox Label="Account No" Name="AccountNo" Value=@(row["AccountNo"]?.GetValue<string>()) Required />
       <!-- #endregion -->
 
-      <!-- !!! Just Template !!! -->
+      <!-- !!! Cuma Template (bisa dihapus) !!! -->
 
 
       </RadzenRow>
@@ -92,7 +135,10 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
 </TemplateForm>
 ```
 
-> Notes: Untuk inputan bisa berubah sesuai dengan filter per masing-masing filter (lihat di google sheet)
+#### 🧠 Catatan:
+
+-   Field input bisa berbeda-beda tergantung kebutuhan report (lihat di Google Sheet).
+-   Komponen ini dibuat per report, jadi bisa banyak form terpisah.er per masing-masing filter (lihat di google sheet)
 
 ```cs
 using System.Text.Json.Nodes;
@@ -130,7 +176,6 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
     #region OnInit
     protected override async Task OnParametersSetAsync()
     {
-
       await base.OnParametersSetAsync();
     }
     #endregion
@@ -142,16 +187,43 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
     }
     #endregion
 
-    #region OnPrintReport
-    public async Task OnPrintReport(JsonObject data)
+    /*
+        Notes ini bisa dihapus.
+        IFINFINClient itu diganti dengan module/service sekarang
+        ControllerName, RouteName => bisa disesuaikan untuk function yang mengembalikan html content dan data reportnya
+    */
+    #region GetReportHTML
+    private async Task<string> GetReportHTML()
     {
       Loading.Show();
 
-      data = SetAuditInfo(data);
-      data = row.Merge(data);
+      var result = await IFINFINClient.GetRow("ControllerName", "RouteName", new { ReffNo = row["Code"]?.GetValue<string>() });
+      string html = result?.Data["HTML"]?.GetValue<string>();
 
       Loading.Close();
-      StateHasChanged();
+
+      return html;
+    }
+    #endregion
+
+    #region PrintReport
+    private async Task PrintReport(string mimeType)
+    {
+      Loading.Show();
+
+      var result = await IFINFINClient.GetRow("ControllerName", "RouteName", new { MimeType = mimeType, ReffNo = row["Code"]?.GetValue<string>() });
+
+      if (result?.Data != null)
+      {
+        var data = result.Data;
+
+        var Content = data["Content"]?.GetValueAsByteArray();
+        var FileName = data["Name"]?.GetValue<string>();
+        var MimeType = data["MimeType"]?.GetValue<string>();
+
+        PreviewFile(Content, FileName, MimeType);
+        Loading.Close();
+      }
     }
     #endregion
   }
@@ -160,10 +232,12 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
 
 > Notes: Component di atas dibuat baru, sehingga kemungkinan besar tidak ditambahkan
 
-3. buat list dan form page, lalu masukan component berdasarkan report code
+### 3. Buat `List Page` dan `Form Page`
 
 -   buat list page dulu
-    ![alt text](report-list-page.png)
+    ![alt text](/assets/img/report/report-list-page.png)
+
+#### 📄 List Page
 
 ```razor
 @page "/report/reporttransaction"
@@ -181,16 +255,17 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
 </RoleAccess>
 ```
 
--   buat info page  
-    ![alt text](report-info-page.png)
+#### 🧾 Form Page Berdasarkan ReportCode
+
+    ![alt text](/assets/img/report/report-info-page.png)
     untuk component yang dirender akan tergantung pada **report code** yang diberikan lewat **route param**
 
 ```razor
-@page "/report/reporttransaction/{ReportCode}"
+@page "/report/reporttransaction/{ReportCode}/{ReportName}"
 
 @using IFinancing360_ACC_UI.Components.Report.TrialBalanceReportComponent
 
-<Title Text="" />
+<Title Text=@FormattedReportName />
 
 <RoleAccess Code="">
   <PageContainer>
@@ -207,25 +282,34 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
 
 @code {
   [Parameter] public string? ReportCode { get; set; }
+  [Parameter] public string? ReportName { get; set; }
+
+  public string? FormattedReportName =>
+  string.Join(' ', ReportName.Split('_')) ?? "Report Transaction Info";
 }
 ```
 
 ---
 
--   tambahin template HTML
-    Disclaimer: emplate ini sebagai contoh, karena tampilan di previewnya nanti bisa berbeda tergantung request/kebutuhan
+### 4. Tambahkan Template HTML untuk Report
 
--   pertama, pastikan sudah mendaftarkan path template di `.env` (kalo udah ada gausah ditambahin lagi ya :))
+> Disclaimer: emplate ini sebagai contoh, karena tampilan di previewnya nanti bisa berbeda tergantung request/kebutuhan
+
+#### ✅ Setup `.env`
+
+Pastikan sudah ada path ke folder template di `.env` (kalo udah ada gausah ditambahin lagi ya :))
 
 ```env
 REPORT_TEMPLATE_PATH=..\ReportTemplate
 ```
 
--   kedua, buat file (`.html`) baru di folder `/ReportTemplate`, untuk penamaan file bebas tergantung nama reportnya
-    ![alt text](/assets/img/dynamic-report/report-template-html.png)
+#### 📁 Buat File `.html` Template
+
+-   Lokasi: `/ReportTemplate`
+-   Nama file bebas, sesuaikan dengan nama report-nya.
+    ![alt text](/assets/img/report/report-template-html.png)
 
 -   ini hanya sebagai contoh isi dari template html, tambahkan css-nya di tag style di dalam header
-    tip: jika mau buat template html bisa buat di codepen (<a href="https://codepen.io/pen/">click here</a>).
 
 ```html
 <!DOCTYPE html>
@@ -306,12 +390,12 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
                 <p
                     style="text-align: center;font-size: 20px; font-weight: bold;"
                 >
-                    {{CompanyName}}
+                    {{Atribut1}}
                 </p>
                 <p
                     style="text-align: center;font-size: 18px; font-weight: bold;"
                 >
-                    {{HeaderName}}
+                    {{Atribut2}}
                 </p>
                 <br />
             </div>
@@ -326,70 +410,35 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
                         class="data-information"
                     >
                         <tr style="border: none; ">
-                            <td style="border: none;width: 30%;">Reff No</td>
+                            <td style="border: none;width: 30%;">Atribut 3</td>
                             <td
                                 style="border: none;width: 5%;text-align: center;"
                             >
                                 :
                             </td>
                             <td style="border: none;width: 30%;">
-                                {{ReffSourceNo}}
+                                {{Atribut3}}
                             </td>
-                            <td style="border: none;width: 30%;">
-                                Transaction Date
-                            </td>
+                            <td style="border: none;width: 30%;">Atribut 4</td>
                             <td
                                 style="border: none;width: 5%;text-align: center;"
                             >
                                 :
                             </td>
                             <td style="border: none;width: 30%;">
-                                {{TransactionDate}}
+                                {{Atribut4}}
                             </td>
-                        </tr>
-                        <tr style="border: none; ">
-                            <td style="border: none;width: 30%;">Editor</td>
-                            <td
-                                style="border: none;width: 5%;text-align: center;"
-                            >
-                                :
-                            </td>
-                            <td style="border: none;width: 30%;">{{Editor}}</td>
-                            <td style="border: none;width: 30%;">Input Date</td>
-                            <td
-                                style="border: none;width: 5%;text-align: center;"
-                            >
-                                :
-                            </td>
-                            <td style="border: none;width: 30%;">
-                                {{InputDate}}
-                            </td>
-                        </tr>
-                        <tr style="border: none; ">
-                            <td style="border: none;width: 30%;">Remarks</td>
-                            <td
-                                style="border: none;width: 5%;text-align: center;"
-                            >
-                                :
-                            </td>
-                            <td style="border: none;width: 30%;">
-                                {{Remarks}}
-                            </td>
-                            <td style="border: none;width: 30%;"></td>
-                            <td
-                                style="border: none;width: 5%;text-align: center;"
-                            ></td>
-                            <td style="border: none;width: 30%;"></td>
                         </tr>
                     </table>
                 </div>
             </div>
         </div>
+
         <div>
             <br />
         </div>
 
-        <!-- Section D A T A -->
+        <!-- section data -->
         <div>
             <div style="padding-top: 18px;">
                 <div id="dynamicData">
@@ -397,7 +446,7 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
                 </div>
             </div>
         </div>
-        <!-- Section D A T A -->
+        <!-- section data -->
 
         <div
             style="display: flex; justify-content: flex-end; margin-top: 20px;"
@@ -449,68 +498,28 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 </html>
 ```
 
--   ambil data di repository
-    ingat tidak ada yang menjamin data diambil dari 1 sumber (repo) bisa 2/lebih, contoh di bawah biar ga bingung aja
+> Pro Tip: Mau ngedesain HTML lebih gampang? Gunain [CodePen](https://codepen.io/pen/) buat preview cepat!
+
+### 1. Struktur dan Pengambilan Data (Repository)
+
+> ⚠️ **Catatan**: Data yang digunakan dalam report _tidak selalu_ berasal dari satu repository. Bisa lebih dari satu, tergantung kebutuhan. Jadi jangan asumsikan semuanya berasal dari satu source.
 
 ```cs
-#region GetRowsByGLLinkID
-  public async Task<List<JournalGlLinkTransactionDetail>> GetRowsByGLLinkID(IDbTransaction transaction, string GlLinkTransactionID)
-  {
-    var p = db.Symbol();
-
-    string query = $@"
-              select
-                  id                      as ID
-                  ,gl_link_transaction_id	as GlLinkTransactionID
-                  ,branch_id				      as BranchID
-                  ,branch_code			      as BranchCode
-                  ,branch_name			      as BranchName
-                  ,gl_link_id				      as GlLinkID
-                  ,gl_link_code			      as GlLinkCode
-                  ,gl_link_name			      as GlLinkName
-                  ,contra_gl_link_id		  as ContraGlLinkID
-                  ,contra_gl_link_code	  as ContraGlLinkCode
-                  ,contra_gl_link_name	  as ContraGlLinkName
-                  ,agreement_no			      as AgreementNo
-                  ,orig_currency_id		    as OrigCurrencyID
-                  ,orig_currency_code		  as OrigCurrencyCode
-                  ,orig_currency_desc		  as OrigCurrencyDesc
-                  ,orig_amount_db			    as OrigAmountDb
-                  ,orig_amount_cr			    as OrigAmountCr
-                  ,exch_rate				      as ExchRate
-                  ,base_amount_db			    as BaseAmountDb
-                  ,base_amount_cr			    as BaseAmountCr
-                  ,remarks				        as Remarks
-                  ,division_id			      as DivisionID
-                  ,division_code			    as DivisionCode
-                  ,division_name			    as DivisionName
-                  ,department_id			    as DepartmentID
-                  ,department_code		    as DepartmentCode
-                  ,department_name		    as DepartmentName
-              from
-                  {tableBase}
-              where
-                  gl_link_transaction_id = {p}GlLinkTransactionID
-              order by
-                  cre_date desc ";
-
-    object parameters = new
-    {
-      GlLinkTransactionID = GlLinkTransactionID
-    };
-
-    var result = await _command.GetRows<JournalGlLinkTransactionDetail>(transaction, query, parameters);
-    return result;
-  }
-  #endregion
+// Hanya template untuk referensi, implementasi bisa berbeda tergantung kebutuhan.
 ```
 
--   tambahin logic di controller, service
--   di sinilah tempat semua data diambil (dari repo) lalu dimasukan (replace) ke dalam template html
+### 2. Implementasi Backend
+
+#### 2.1 Tambahkan Logic di Layer Controller dan Service
+
+-   Logic utama untuk mengambil data dari repository dan mengganti isi template HTML dilakukan di dalam service.
+-   Controller hanya bertugas sebagai endpoint pemanggil service.
+
+#### 2.2 Contoh Implementasi Service - `GetHTMLPreview`
 
 ```cs
 #region PreviewHTML
-public async Task<string> GetHTMLPreview(string Code, string CompanyName, List<JsonObject> Employee)
+public async Task<string> GetHTMLPreview(string reffNo)
 {
     using var connection = _repo.GetDbConnection();
     using var transaction = connection.BeginTransaction();
@@ -518,35 +527,15 @@ public async Task<string> GetHTMLPreview(string Code, string CompanyName, List<J
     try
     {
       // Ambil isi file template HTML
-      string envPath = Env.GetString("REPORT_TEMPLATE_PATH");
-      string templatePath = Path.Combine(envPath, "JournalTransaction.html");
+      string envPath = Env.GetString("REPORT_TEMPLATE_PATH"); // Sesuaikan dengan atribut di env
+      string templatePath = Path.Combine(envPath, "JournalTransaction.html"); // Sesuaikan dengan nama templatenya
       string htmlContent = await File.ReadAllTextAsync(templatePath);
 
-      // Isi data untuk table atas (ada keterangan table atas di bawah code snippet, ingat ini hanya contoh)
-      var offeringLetter = await _repo.GetRowByReffSourceNo(transaction, Code!);
-
-      if (offeringLetter == null) throw new Exception("Journal doest exists");
-
-      var employee = Employee.Find(x => x["Code"]?.GetValue<string>() == offeringLetter.ModBy);
-
-      string EmployeeName = "";
-      if (employee != null)
-      {
-          EmployeeName = employee["Name"]?.GetValue<string>() ?? "";
-      }
-      string Remarks = $"{offeringLetter.TransactionName} with code {Code}";
-
+      // Isi data untuk table atas (header) (ada keterangan table atas di bawah code snippet, ingat ini hanya contoh)
       // Data dinamis yang ingin disuntikkan ke dalam template
       var parameters = new Dictionary<string, string>
       {
-          { "CompanyName", CompanyName },
-          { "HeaderName", "Journal Transaction" },
-          { "ReffSourceNo", offeringLetter.ReffSourceNo! },
-          { "Editor", EmployeeName },
-          { "Remarks", Remarks! },
-          { "InputDate", offeringLetter.InputDate?.ToString("dd/MM/yyyy")! },
-          { "TransactionDate", offeringLetter.TransactionDate?.ToString("dd/MM/yyyy")! },
-          { "root", envPath }
+          { "Atribut_1", string.Empty },
       };
 
       // Gantikan placeholder dengan nilai dari dictionary
@@ -558,59 +547,33 @@ public async Task<string> GetHTMLPreview(string Code, string CompanyName, List<J
 
 
       // Isi data di table bawah (ada keterangan table bawah di bawah code snippet, ingat ini hanya contoh)
-      List<JournalGlLinkTransactionDetail> amortizationCalculates = await _repoJournalGlLinkTransactionDetail.GetRowsByGLLinkID(transaction, offeringLetter.ID!);
-      amortizationCalculates = amortizationCalculates.ToList();
-
-      var baseAmount = await _repoJournalGlLinkTransactionDetail.GetSumBaseAmount(transaction, offeringLetter.ID!);
+      List<JournalGlLinkTransactionDetail> dataList = [];
 
       string queryHtml = string.Empty;
 
-      // Menambahkan heading untuk tenor
       queryHtml += $@"
-              <table style=""border-collapse: collapse; width: 100%; border:none"">
-                  <thead>
-                      <tr style=""border-top: 2px solid black; border-bottom: 2px solid black;"">
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Branch</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Agreement No</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Description</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Curr</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Debit</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Credit</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Rate</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Base Amount (D)</th>
-                          <th style=""font-weight:bold; padding: 8px; border: none;"">Base Amount (C)</th>
-                      </tr>
-                  </thead>
-                  <tbody>";
-      foreach (var item in amortizationCalculates)
+        <table style=""border-collapse: collapse; width: 100%; border:none"">
+            <thead>
+                <tr style=""border-top: 2px solid black; border-bottom: 2px solid black;"">
+                    <th style=""font-weight:bold; padding: 8px; border: none;"">Column 1</th>
+                    <th style=""font-weight:bold; padding: 8px; border: none;"">Column 2</th>
+                </tr>
+            </thead>
+            <tbody>";
+
+        // Ini untuk isi data yang ada di tabelnya
+      foreach (var item in dataList)
       {
           queryHtml += $@"
-                      <tr style=""border-bottom: 1px solid black;"">
-                          <td style=""text-align:left;  border: none;"">{item.BranchName}</td>
-                          <td style=""text-align:left;  border: none;"">{item.AgreementNo}</td>
-                          <td style=""text-align:left;  border: none;"">{item.Remarks}</td>
-                          <td style=""text-align:left;  border: none;"">{item.OrigCurrencyCode}</td>
-                          <td style=""text-align:right; border: none;"">{item.OrigAmountDb:N0}</td>
-                          <td style=""text-align:right; border: none;"">{item.OrigAmountCr:N0}</td>
-                          <td style=""text-align:right; border: none;"">{item.ExchRate:N0}</td>
-                          <td style=""text-align:right; border: none;"">{item.BaseAmountDb:N0}</td>
-                          <td style=""text-align:right; border: none;"">{item.BaseAmountCr:N0}</td>
-                      </tr>";
+            <tr style=""border-bottom: 1px solid black;"">
+                <td style=""text-align:left;  border: none;"">{item.Column1}</td>
+                <td style=""text-align:left;  border: none;"">{item.Column2}</td>
+            </tr>";
       }
+
       queryHtml += $@"
-                      <tr style=""border-top: 2px solid black; border-bottom: 2px solid black;"">
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;""></td>
-                          <td style=""text-align:right; border: none;"">{baseAmount.BaseAmountDb:N0}</td>
-                          <td style=""text-align:right; border: none;"">{baseAmount.BaseAmountCr:N0}</td>
-                      </tr>
-                  </tbody>
-              </table>";
+            </tbody>
+        </table>";
 
 
       htmlContent = htmlContent.Replace("<!-- Data -->", queryHtml);
@@ -623,55 +586,180 @@ public async Task<string> GetHTMLPreview(string Code, string CompanyName, List<J
     }
 }
 #endregion
+
+#region GenerateDocumentAllType
+public async Task<FileDoc> GenerateDocumentAllType(string mimeType, string reffNo)
+{
+    using var connection = _repo.GetDbConnection();
+    using var transaction = connection.BeginTransaction();
+
+    try
+    {
+      // Ambil isi file template HTML
+      string envPath = Env.GetString("REPORT_TEMPLATE_PATH"); // Sesuaikan dengan atribut di env
+      string templatePath = Path.Combine(envPath, "JournalTransaction.html"); // Sesuaikan dengan nama templatenya
+      string htmlContent = await File.ReadAllTextAsync(templatePath);
+
+      // Isi data untuk table atas (header) (ada keterangan table atas di bawah code snippet, ingat ini hanya contoh)
+      // Data dinamis yang ingin disuntikkan ke dalam template
+      var parameters = new Dictionary<string, string>
+      {
+          { "Atribut_1", string.Empty },
+      };
+
+      // Gantikan placeholder dengan nilai dari dictionary
+      foreach (var parameter in parameters)
+      {
+          string placeholder = $"{{{{{parameter.Key}}}}}";
+          htmlContent = htmlContent.Replace(placeholder, parameter.Value);
+      }
+
+
+      // Isi data di table bawah (ada keterangan table bawah di bawah code snippet, ingat ini hanya contoh)
+      List<JournalGlLinkTransactionDetail> dataList = [];
+
+      string queryHtml = string.Empty;
+
+      queryHtml += $@"
+        <table style=""border-collapse: collapse; width: 100%; border:none"">
+            <thead>
+                <tr style=""border-top: 2px solid black; border-bottom: 2px solid black;"">
+                    <th style=""font-weight:bold; padding: 8px; border: none;"">Column 1</th>
+                    <th style=""font-weight:bold; padding: 8px; border: none;"">Column 2</th>
+                </tr>
+            </thead>
+            <tbody>";
+
+        // Ini untuk isi data yang ada di tabelnya
+      foreach (var item in dataList)
+      {
+          queryHtml += $@"
+            <tr style=""border-bottom: 1px solid black;"">
+                <td style=""text-align:left;  border: none;"">{item.Column1}</td>
+                <td style=""text-align:left;  border: none;"">{item.Column2}</td>
+            </tr>";
+      }
+
+      queryHtml += $@"
+            </tbody>
+        </table>";
+
+
+      htmlContent = htmlContent.Replace("<!-- Data -->", queryHtml);
+
+        MemoryStream memoryStream = new();
+
+        if (mimeType == null) throw new ArgumentNullException("Mime Type is null");
+
+        if (mimeType == "Docx")
+        {
+            memoryStream = Report.ConvertHtmlToDocx(htmlContent);
+            mimeTypetoReturn = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+        if (mimeType == "Xlsx")
+        {
+            memoryStream = Report.ConvertHTMLtoExcel(htmlContent);
+            mimeTypetoReturn = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        }
+        if (mimeType == "PDF")
+        {
+            mimeTypetoReturn = "application/pdf";
+            memoryStream = Report.ConvertHtmlToDocx(htmlContent);
+
+            // Konversi memoryStream (DOCX) ke byte array
+            byte[] docxBytes;
+            using (var ms = new MemoryStream())
+            {
+                memoryStream.CopyTo(ms);
+                docxBytes = ms.ToArray();
+            }
+
+            // Convert DOCX ke PDF
+            byte[] pdfBytes = await ConvertDocxToPDF(docxBytes);
+            memoryStream = new MemoryStream(pdfBytes);
+        }
+
+        FileDoc fileDoc = new()
+        {
+            Content = memoryStream.ToArray(),
+            Name = $"JOURNAL_TRANSACTION.{mimeType}",
+            MimeType = mimeTypetoReturn,
+        };
+
+        return fileDoc;
+    }
+    catch (Exception)
+    {
+        transaction.Rollback();
+        throw;
+    }
+}
+#endregion
 ```
 
 keterangan:
 
--   table atas
-    ![alt text](/assets/img/dynamic-report/table-atas-contoh.png)
+-   Tabel atas => biasanya header untuk data perusahaan / report
+    ![alt text](/assets/img/report/table-atas-contoh.png)
 
--   table bawah
-    ![alt text](assets/img/dynamic-report/table-bawah-contoh.png)
+-   Table bawah => isinya data intinya dan jumlahnya banyak
+    ![alt text](assets/img/report/table-bawah-contoh.png)
 
--   controller
-    ingat ini hanya contoh
+---
+
+#### 2.3 Contoh Implementasi Controller
 
 ```cs
 [HttpGet("GetHTMLPreview")]
 public async Task<ActionResult> GetPreview(string ReffNo)
 {
-  try
-  {
-    var headers = Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString());
-    var company = await _internalAPIClient.GetRow("IFINSYS", "SysCompany", "GetCompany", null, headers: headers);
-    string CompanyName = "";
-    if (company.Data != null)
+    try
     {
-      CompanyName = company.Data["Name"]?.GetValue<string>()!;
+        var result = await _service.GetHTMLPreview(ReffNo);
+        return ResponseSuccess(new { HTML = result });
     }
+    catch (Exception ex)
+    {
+        return ResponseError(ex);
+    }
+}
 
-    var emp = await _internalAPIClient.GetRows("IFINSYS", "SysEmployeeMain", "GetRows", parameters: new { keyword = "", offset = 0, limit = int.MaxValue }, headers: headers);
-
-    var employee = emp.Data;
-
-    var result = await _service.GetHTMLPreview(ReffNo, CompanyName, employee ?? []);
-    return ResponseSuccess(new { HTML = result });
-  }
-  catch (Exception ex)
-  {
+[HttpGet("PrintDocumentAllType")]
+public async Task<ActionResult> PrintDocument(string MimeType, string ReffNo)
+{
+    try
+    {
+    var content = await _service.GenerateDocumentAllType(MimeType, ReffNo);
+    return ResponseSuccess(content);
+    }
+    catch (Exception ex)
+    {
     return ResponseError(ex);
-  }
+    }
 }
 ```
 
-notes: dalam kasus tertentu tidak harus menggunakan `_internalAPIClient`, itu hanya diperlukan ketika butuh ngambil/tarik data dari module lain
+> 💡 _Note_: Penggunaan `_internalAPIClient` hanya diperlukan jika ingin mengambil data dari modul lain.
 
--   tambahin button di UI
-    sekarang ke UI, tambahkan component button dan functionnya (untuk ambil template yang sudah diisi data)
+---
+
+### 3. Tampilan UI (Frontend)
+
+#### 3.1 Tambahkan Button di UI
+
+Gunakan komponen `<ButtonPreview />` untuk menampilkan tombol yang akan memicu preview report.
 
 ```razor
-<ButtonPreview Text="Print Voucher" Icon="Print" ButtonStyle="ButtonStyle.Info" Template="@GetHTMLForPreview" PrintAs="Print" />
+<ButtonPreview
+    Text="Print Voucher"
+    Icon="Print"
+    ButtonStyle="ButtonStyle.Info"
+    Template="@GetHTMLForPreview"
+    PrintAs="PrintReport"
+/>
 ```
+
+#### 3.2 Implementasi Function Preview HTML
 
 ```cs
 #region Preview report
@@ -679,12 +767,37 @@ private async Task<string> GetHTMLForPreview()
 {
     Loading.Show();
 
-    var result = await IFINFINClient.GetRow("JournalGlLinkTransaction", "GetHTMLPreview", new { ReffNo = row["Code"]?.GetValue<string>() });
+    var result = await IFINFINClient.GetRow(
+        "JournalGlLinkTransaction",
+        "GetHTMLPreview",
+        new { ReffNo = row["Code"]?.GetValue<string>() }
+    );
+
     string html = result?.Data["HTML"]?.GetValue<string>();
 
     Loading.Close();
 
     return html;
+}
+#endregion
+
+#region PrintReport
+private async Task PrintReport(string mimeType)
+{
+    Loading.Show();
+
+    var result = await IFINACCClient.GetRow("JournalGlLinkTransaction", "PrintDocumentAllType", new { MimeType = mimeType, ReffNo = row["Code"]?.GetValue<string>() });
+    if (result?.Data != null)
+    {
+    var data = result.Data;
+
+    var Content = data["Content"]?.GetValueAsByteArray();
+    var FileName = data["Name"]?.GetValue<string>();
+    var MimeType = data["MimeType"]?.GetValue<string>();
+
+    PreviewFile(Content, FileName, MimeType);
+    Loading.Close();
+    }
 }
 #endregion
 ```
