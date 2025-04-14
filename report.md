@@ -1,4 +1,6 @@
-## 📄 Langkah Implementasi Report
+# 📄 Langkah Implementasi Report
+
+## Setup awal (Screen - Config)
 
 ### 1. Buat `DataGrid` Component
 
@@ -15,6 +17,8 @@
     -   Contoh:
         ![alt text](/assets/img/report/report-list-menuinfo.png)
         ![alt text](/assets/img/report/report-list-rolecode.png)
+
+## UI
 
 #### ⚙️ Buat Komponen `DataGrid`
 
@@ -70,8 +74,10 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
     #endregion
 
     #region Variables
+    public JsonObject row = [];
+
     public string ParamReportName {
-        get => string.Join('_', row["ReportName"]?.GetValue<string>().Split(' ', StringSplitOptions.Empty));
+        get => string.Join('_', row["ReportName"]?.GetValue<string>().Split(' ', StringSplitOptions.RemoveEmptyEntries));
     }
     #endregion
 
@@ -95,7 +101,7 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
 Per masing-masing report itu pasti punya halaman form yang berisi filter untuk data yang akan dicetak.
 
 ```razor
-<TemplateForm Submit="OnPrintReport">
+<TemplateForm>
   <RadzenStack Gap="16">
     <!-- #region Toolbar -->
     <RadzenRow Gap="8">
@@ -138,16 +144,27 @@ Per masing-masing report itu pasti punya halaman form yang berisi filter untuk d
 #### 🧠 Catatan:
 
 -   Field input bisa berbeda-beda tergantung kebutuhan report (lihat di Google Sheet).
--   Komponen ini dibuat per report, jadi bisa banyak form terpisah.er per masing-masing filter (lihat di google sheet)
+-   Komponen ini dibuat per report, dan untuk komponen, foldernya dibedain dengan TransactionComponent dan format penamaan => '[ReportName]Component'.
+
+**Struktur folder:**
+
+```txt
+Components
+└── Report
+    └── TransactionComponent
+        └── TransactionDataGrid.razor / .razor.cs
+    └── [ReportName]Component
+        └── [ReportName]Form.razor / .razor.cs
+```
 
 ```cs
 using System.Text.Json.Nodes;
 using iFinancing360.UI.Helper.APIClient;
 using Microsoft.AspNetCore.Components;
 
-namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
+namespace IFinancing360_[MODULE]_UI.Components.Report.[ReportName]Component
 {
-  public partial class TrialBalanceForm
+  public partial class [ReportName]Form
   {
     #region Service
     [Inject] IFINSYSClient IFINSYSClient { get; set; } = null!;
@@ -157,11 +174,8 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
     [Parameter, EditorRequired] public string? ReportCode { get; set; }
     #endregion
 
-    #region Component field
-    #endregion
-
     #region Class field
-    private const string BASE_PATH = "/base/path";
+    private const string BASE_PATH = "/path/ke/halaman/report/list";
 
     public JsonObject row = [];
     #endregion
@@ -206,8 +220,8 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
     }
     #endregion
 
-    #region PrintReport
-    private async Task PrintReport(string mimeType)
+    #region ReportPrint
+    private async Task ReportPrint(string mimeType)
     {
       Loading.Show();
 
@@ -222,6 +236,7 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
         var MimeType = data["MimeType"]?.GetValue<string>();
 
         PreviewFile(Content, FileName, MimeType);
+
         Loading.Close();
       }
     }
@@ -230,14 +245,20 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
 }
 ```
 
-> Notes: Component di atas dibuat baru, sehingga kemungkinan besar tidak ditambahkan
-
 ### 3. Buat `List Page` dan `Form Page`
-
--   buat list page dulu
-    ![alt text](/assets/img/report/report-list-page.png)
-
+---
 #### 📄 List Page
+
+![alt text](/assets/img/report/report-list-page.png)
+
+**Struktur folder:**
+
+```txt
+Pages
+└── Report
+    └── TransactionPage
+        └── TransactionList.razor
+```
 
 ```razor
 @page "/report/reporttransaction"
@@ -255,10 +276,23 @@ namespace IFinancing360_ACC_UI.Components.Report.TrialBalanceComponent
 </RoleAccess>
 ```
 
+---
+
 #### 🧾 Form Page Berdasarkan ReportCode
 
-    ![alt text](/assets/img/report/report-info-page.png)
-    untuk component yang dirender akan tergantung pada **report code** yang diberikan lewat **route param**
+![alt text](/assets/img/report/report-info-page.png)
+
+**Struktur folder:**
+
+```txt
+Pages
+└── Report
+    └── TransactionPage
+        └── TransactionList.razor
+        └── TransactionInfo.razor
+```
+
+Untuk component yang dirender akan tergantung pada **report code** yang diberikan lewat **route param**.
 
 ```razor
 @page "/report/reporttransaction/{ReportCode}/{ReportName}"
@@ -303,11 +337,14 @@ Pastikan sudah ada path ke folder template di `.env` (kalo udah ada gausah ditam
 REPORT_TEMPLATE_PATH=..\ReportTemplate
 ```
 
+## API
+
 #### 📁 Buat File `.html` Template
 
 -   Lokasi: `/ReportTemplate`
 -   Nama file bebas, sesuaikan dengan nama report-nya.
-    ![alt text](/assets/img/report/report-template-html.png)
+
+![alt text](/assets/img/report/report-template-html.png)
 
 -   ini hanya sebagai contoh isi dari template html, tambahkan css-nya di tag style di dalam header
 
@@ -500,7 +537,9 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 
 > Pro Tip: Mau ngedesain HTML lebih gampang? Gunain [CodePen](https://codepen.io/pen/) buat preview cepat!
 
-### 1. Struktur dan Pengambilan Data (Repository)
+---
+
+### Struktur dan Pengambilan Data (Repository)
 
 > ⚠️ **Catatan**: Data yang digunakan dalam report _tidak selalu_ berasal dari satu repository. Bisa lebih dari satu, tergantung kebutuhan. Jadi jangan asumsikan semuanya berasal dari satu source.
 
