@@ -43,6 +43,7 @@ Components
             TItem="JsonObject"
             LoadData="LoadData"
             AllowSelected="true"
+            // [comment ini dihapus] $"/systemsetting/menu -> path-nya disesuaikan dengan route (@page) di halaman list (kalo bingung tanya)
             RowLink=@((row) => $"/systemsetting/menu/{row["ReportCode"]?.ToString()}/{ParamReportName}")>
 
     <Columns>
@@ -73,11 +74,12 @@ namespace IFinancing360_ACC_UI.Components.Report.TransactionComponent
     DataGrid<JsonObject> dataGrid = null!;
     #endregion
 
-    #region Variables
-    public JsonObject row = [];
+    #region ParamReportName
+    public string ParamReportName(JsonObject row)
+    {
+      var myStr = string.Join('_', (row["ReportName"]?.GetValue<string>() ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
-    public string ParamReportName {
-        get => string.Join('_', row["ReportName"]?.GetValue<string>().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+      return myStr;
     }
     #endregion
 
@@ -110,8 +112,8 @@ Per masing-masing report itu pasti punya halaman form yang berisi filter untuk d
             ButtonStyle="ButtonStyle.Info"
             Text="Print Voucher"
             Icon="Print"
-            Template="@GetReportHTML"
-            PrintAs="ReportPrint" />
+            Template="@GetReportHTML" // [comment ini dihapus] Template untuk function review HTML
+            PrintAs="ReportPrint" /> // [comment ini dihapus] PrintAs untuk function print reportnya
       </RoleAccess>
 
       <Button ButtonStyle="ButtonStyle.Danger" Text="Back" Click="Back" />
@@ -175,7 +177,7 @@ namespace IFinancing360_[MODULE]_UI.Components.Report.[ReportName]Component
     #endregion
 
     #region Class field
-    private const string BASE_PATH = "/path/ke/halaman/report/list";
+    private const string BASE_PATH = "/path/ke/halaman/report/list"; // itu perhatiin lagi path-nya (kurang jelas tanya)
 
     public JsonObject row = [];
     #endregion
@@ -202,9 +204,9 @@ namespace IFinancing360_[MODULE]_UI.Components.Report.[ReportName]Component
     #endregion
 
     /*
-        Notes ini bisa dihapus.
+        [comment ini dihapus]
         IFINFINClient itu diganti dengan module/service sekarang
-        ControllerName, RouteName => bisa disesuaikan untuk function yang mengembalikan html content dan data reportnya
+        ControllerName, RouteName => bisa disesuaikan untuk function yang mengembalikan html content dan data reportnya yg ada di API
     */
     #region GetReportHTML
     private async Task<string> GetReportHTML()
@@ -246,7 +248,9 @@ namespace IFinancing360_[MODULE]_UI.Components.Report.[ReportName]Component
 ```
 
 ### 3. Buat `List Page` dan `Form Page`
+
 ---
+
 #### 📄 List Page
 
 ![alt text](/assets/img/report/report-list-page.png)
@@ -275,6 +279,22 @@ Pages
   </PageContainer>
 </RoleAccess>
 ```
+
+> Notes: @page itu isinya path/route yang bisa kita lihat di search bar  
+> Tujuan dari route: itu sama kayak alamat mantan, kalo lu mau balikin barang mantan butuh alamat kan, sama kyk component kalo mau dia muncul, tulis alamatnya/path
+
+```razor
+@page "/report/reporttransaction"
+```
+
+![alt text](image-1.png)
+
+> Untuk ngambil route dimana bang?
+> Di config (IFINSYS) ada setting untuk menu
+
+## ![alt text](image-2.png)
+
+> Perhatiin juga URL menu si Parent (menu), jangan cuman Child (submenu) doang
 
 ---
 
