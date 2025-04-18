@@ -366,192 +366,173 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 
 ![alt text](/assets/img/report/report-template-html.png)
 
--   ini hanya sebagai contoh isi dari template html, tambahkan css-nya di tag style di dalam header
+-   Template hanya dibuat 1x, jadi hanya ada 1 per module, yang berubah itu datanya dan berubah di service
 
 ```html
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-        />
-        <title>Journal Transaction</title>
-        <style>
-            body {
-                font-family: "Times New Roman", Times, serif;
-            }
+<html lang="id">
 
-            .text-center {
-                text-align: center !important;
-            }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dokumen Contoh</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 14px;
+      font-size: 14px;
+    }
 
-            .text-right {
-                text-align: right !important;
-            }
+    p,
+    h1,
+    h2,
+    h3 {
+      padding: 0;
+      margin: 0;
+    }
 
-            .container {
-                width: 80%;
-                margin: 0 auto;
-            }
+    header {
+      display: flex;
+      gap: 32px;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #838383;
+      padding-bottom: 14px;
+    }
 
-            .container .header h1 {
-                text-align: center;
-            }
+    header img {
+      height: 80px;
+    }
 
-            .header,
-            .section {
-                margin-bottom: 20px;
-            }
+    header .header-main-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
 
-            .section h2 {
-                margin-bottom: 10px;
-                font-weight: 700;
-                font-size: 24px;
-            }
+    .header-main-info p {
+      font-size: 1em;
+    }
 
-            .section.information {
-                margin-bottom: 50px;
-            }
+    .header-main-info p span {
+      font-weight: bold;
+      font-size: 1rem;
+    }
 
-            .section p {
-                margin: 5px 0;
-                font-size: 14px;
-                padding-top: 3px;
-            }
+    header .report-print-date {
+      font-size: 1em;
 
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-            }
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #5B5B5B;
 
-            table,
-            th,
-            td {
-                border: 1px solid black;
-            }
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-            th,
-            td {
-                padding: 8px;
-                text-align: left;
-            }
-        </style>
-    </head>
+    main {
+      padding-bottom: 32px;
+    }
 
-    <body>
-        <div class="container">
-            <div>
-                <p
-                    style="text-align: center;font-size: 20px; font-weight: bold;"
-                >
-                    {{Atribut1}}
-                </p>
-                <p
-                    style="text-align: center;font-size: 18px; font-weight: bold;"
-                >
-                    {{Atribut2}}
-                </p>
-                <br />
-            </div>
-            <br />
-            <div class="section-information">
-                <p
-                    style="font-size: 16px; font-weight: bold;margin-bottom: 6px;"
-                ></p>
-                <div>
-                    <table
-                        style="border: none; border-collapse: collapse; width: 100%;"
-                        class="data-information"
-                    >
-                        <tr style="border: none; ">
-                            <td style="border: none;width: 30%;">Atribut 3</td>
-                            <td
-                                style="border: none;width: 5%;text-align: center;"
-                            >
-                                :
-                            </td>
-                            <td style="border: none;width: 30%;">
-                                {{Atribut3}}
-                            </td>
-                            <td style="border: none;width: 30%;">Atribut 4</td>
-                            <td
-                                style="border: none;width: 5%;text-align: center;"
-                            >
-                                :
-                            </td>
-                            <td style="border: none;width: 30%;">
-                                {{Atribut4}}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
+    table {
+      font-size: 1em;
 
-        <div>
-            <br />
-        </div>
+      width: 100%;
+      min-width: 1080px;
+      border-collapse: collapse;
+      margin-top: 14px;
+    }
 
-        <!-- section data -->
-        <div>
-            <div style="padding-top: 18px;">
-                <div id="dynamicData">
-                    <!-- Data -->
-                </div>
-            </div>
-        </div>
-        <!-- section data -->
+    table,
+    th,
+    td {
+      border: 1px solid #bdc3c7;
+    }
 
-        <div
-            style="display: flex; justify-content: flex-end; margin-top: 20px;"
-        >
-            <table style="border:1px solid black; width: 50%;">
-                <thead>
-                    <tr>
-                        <th
-                            style="font-weight:bold; width: 25%; text-align: center;"
-                        >
-                            Prepared
-                        </th>
-                        <th
-                            style="font-weight:bold; width: 25%; text-align: center;"
-                        >
-                            Checked
-                        </th>
-                        <th
-                            style="font-weight:bold; width: 25%; text-align: center;"
-                        >
-                            Approved
-                        </th>
-                        <th
-                            style="font-weight:bold; width: 25%; text-align: center;"
-                        >
-                            Posted
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td
-                            style="text-align:left; width: 25%; height: 70px;"
-                        ></td>
-                        <td
-                            style="text-align:left; width: 25%; height: 70px;"
-                        ></td>
-                        <td
-                            style="text-align:left; width: 25%; height: 70px;"
-                        ></td>
-                        <td
-                            style="text-align:left; width: 25%; height: 70px;"
-                        ></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </body>
+    th,
+    td {
+      padding: 6px;
+    }
+
+    th {
+      background-color: #C6DCFE;
+    }
+
+    footer {
+      position: relative;
+      bottom: 0;
+      left: 14px;
+      right: 14px;
+      padding: 14px 0;
+      font-size: 0.85em;
+      border-top: 1px solid #8C8C8C;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .watermark-container {
+      position: absolute;
+      top: 100px;
+      /* jarak dari atas halaman, bisa kamu sesuaikan */
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 0;
+      /* pastikan di belakang isi tabel */
+    }
+
+    .watermark-logo {
+      max-width: 500px;
+      width: 60%;
+      opacity: 0.06;
+      /* transparansi lembut */
+      filter: blur(1px);
+      /* biar agak halus */
+      pointer-events: none;
+      /* biar ga ganggu klik */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="watermark-container">
+    <img src="logo.png" alt="iFinancing 360 Logo" class="watermark-logo">
+  </div>
+
+  <header>
+    <img src="mini-logo.png" alt="iFinancing 360 Logo" class="mini-logo">
+    
+    <!-- Data di header disesuaikan sesuai dengan report masing-masing -->
+    <div class="header-main-info">
+      <h2>PT. INOVASI MITRA SEJATI</h2>
+      <h3>REPORT TRIAL BALANCE</h3>
+      <p>Accounting Period: <span>dd/MM/yyyy-dd/MM/yyyy</span>
+        - Account No: <span>################</span>
+      </p>
+    </div>
+    <div class="report-print-date">
+      <p style="font-weight: bold;">Print Date:</p>
+      <p>Thursday, February 3 2025</p>
+      <p>11:05 AM (GMT +7)</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Data -->
+  </main>
+
+  <footer>
+    <p>&copy; 2025 PT. Web Dev Ceria. All rights reserved.</p>
+    <p style="text-align: right;">(021) 39730397 <br>
+      Alam Sutera, 5th Floor, Suite 01-17 The Smith @, RT.002/RW.003, Kunciran, Kec. Pinang, Kota Tangerang, Banten
+      15315</p>
+  </footer>
+
+</body>
+
 </html>
 ```
 
@@ -564,7 +545,54 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 > ⚠️ **Catatan**: Data yang digunakan dalam report _tidak selalu_ berasal dari satu repository. Bisa lebih dari satu, tergantung kebutuhan. Jadi jangan asumsikan semuanya berasal dari satu source.
 
 ```cs
-// Hanya template untuk referensi, implementasi bisa berbeda tergantung kebutuhan.
+/*
+- Function repo dibuat di repo dari table base saja
+- Model tidak perlu dibuat baru, cukup menggunakan model dari table base saja
+- Parameter berfungsi untuk filter data, jika tidak ada sisakan variable transaction saja
+*/
+
+#region GetRowsForReport
+public async Task<List<SurveyMain>> GetRowsForReport(IDbTransaction transaction)
+{
+    var p = db.Symbol();
+
+    string query = $@"
+    select
+        am.id                               AS ID
+        ,am.code							AS Code
+        ,am.survey_result_date				AS SurveyResultDate
+        ,am.survey_result_amount			AS SurveyResultAmount
+        ,am.survey_result_remarks			AS SurveyResultRemarks
+        ,am.status							AS Status
+        ,am.survey_result_value				AS SurveyResultValue
+        ,am.return_count					AS ReturnCount
+        ,ar.code							AS RequestNo
+        ,ar.surveyor_id						AS SurveyorID
+        ,ar.reff_code						AS ReffCode
+        ,ar.reff_name						AS ReffName
+        ,ar.reff_object						AS ReffObject
+        ,ar.survey_fee_amount				AS SurveyFeeAmount
+        ,ar.contact_person_name				AS ContactPersonName
+        ,ar.application_no					AS ApplicationNo
+        ,ar.contact_person_area_phone_no    AS ContactPersonAreaPhoneNo
+        ,ar.contact_person_phone_no			AS ContactPersonPhoneNo
+        ,ar.address							AS Address
+        ,ms.surveyor_name					AS SurveyorName
+        ,ms.is_external						AS IsExternal
+        ,am.survey_request_id               AS SurveyRequestID
+    from
+        {tableBase} am
+        left join
+            {tableBaseSurveyRequest} ar on (ar.id = am.survey_request_id)
+        left join
+            {tableBaseMasterSurveyor} ms on (ar.surveyor_id = ms.id)";
+
+    var parameters = new { };
+
+    var result = await _command.GetRow<SurveyMain>(transaction, query, parameters);
+    return result;
+}
+#endregion
 ```
 
 ### 2. Implementasi Backend
@@ -578,6 +606,9 @@ REPORT_TEMPLATE_PATH=..\ReportTemplate
 
 ```cs
 #region PreviewHTML
+// comment ini harus dihapus setelah dibaca!
+// Parameter dari function ini dapat berubah tergantung filter yang ada, jadi tidak harus selalu reffNo
+// Jika tidak ada filternya, parameter dari functionnya bisa dihapus jadi kosong
 public async Task<string> GetHTMLPreview(string reffNo)
 {
     using var connection = _repo.GetDbConnection();
@@ -590,6 +621,7 @@ public async Task<string> GetHTMLPreview(string reffNo)
       string templatePath = Path.Combine(envPath, "JournalTransaction.html"); // Sesuaikan dengan nama templatenya
       string htmlContent = await File.ReadAllTextAsync(templatePath);
 
+// comment ini harus dihapus setelah dibaca!
       // Isi data untuk table atas (header) (ada keterangan table atas di bawah code snippet, ingat ini hanya contoh)
       // Data dinamis yang ingin disuntikkan ke dalam template
       var parameters = new Dictionary<string, string>
@@ -605,6 +637,7 @@ public async Task<string> GetHTMLPreview(string reffNo)
       }
 
 
+// comment ini harus dihapus setelah dibaca!
       // Isi data di table bawah (ada keterangan table bawah di bawah code snippet, ingat ini hanya contoh)
       List<JournalGlLinkTransactionDetail> dataList = [];
 
@@ -647,6 +680,9 @@ public async Task<string> GetHTMLPreview(string reffNo)
 #endregion
 
 #region GenerateDocumentAllType
+// comment ini harus dihapus setelah dibaca!
+// parameter dari function ini dapat berubah tergantung filter yang ada, jadi tidak harus selalu reffNo
+// kalo tidak ada filternya, parameter dari functionnya sisakan mimeType karena parameter wajib
 public async Task<FileDoc> GenerateDocumentAllType(string mimeType, string reffNo)
 {
     using var connection = _repo.GetDbConnection();
@@ -659,6 +695,7 @@ public async Task<FileDoc> GenerateDocumentAllType(string mimeType, string reffN
       string templatePath = Path.Combine(envPath, "JournalTransaction.html"); // Sesuaikan dengan nama templatenya
       string htmlContent = await File.ReadAllTextAsync(templatePath);
 
+// comment ini harus dihapus setelah dibaca!
       // Isi data untuk table atas (header) (ada keterangan table atas di bawah code snippet, ingat ini hanya contoh)
       // Data dinamis yang ingin disuntikkan ke dalam template
       var parameters = new Dictionary<string, string>
@@ -674,8 +711,9 @@ public async Task<FileDoc> GenerateDocumentAllType(string mimeType, string reffN
       }
 
 
+// comment ini harus dihapus setelah dibaca!
       // Isi data di table bawah (ada keterangan table bawah di bawah code snippet, ingat ini hanya contoh)
-      List<JournalGlLinkTransactionDetail> dataList = [];
+      List<JournalGlLinkTransactionDetail> dataList = []; // dataList ini akan diisi dengan pemanggilan function repo dan pastinya cuman 1 doang yang dipanggil di sini
 
       string queryHtml = string.Empty;
 
@@ -689,6 +727,7 @@ public async Task<FileDoc> GenerateDocumentAllType(string mimeType, string reffN
             </thead>
             <tbody>";
 
+// comment ini harus dihapus setelah dibaca!
         // Ini untuk isi data yang ada di tabelnya
       foreach (var item in dataList)
       {
@@ -741,7 +780,7 @@ public async Task<FileDoc> GenerateDocumentAllType(string mimeType, string reffN
         FileDoc fileDoc = new()
         {
             Content = memoryStream.ToArray(),
-            Name = $"JOURNAL_TRANSACTION.{mimeType}",
+            Name = $"JOURNAL_TRANSACTION.{mimeType}", // nama ini menyesuaikan dengan nama report, formatnya sama
             MimeType = mimeTypetoReturn,
         };
 
@@ -769,6 +808,8 @@ keterangan:
 #### 2.3 Contoh Implementasi Controller
 
 ```cs
+// comment ini harus dihapus setelah dibaca!
+// parameter dari function ini berisi filter, kalo tidak ada kosongkan saja
 [HttpGet("GetHTMLPreview")]
 public async Task<ActionResult> GetPreview(string ReffNo)
 {
@@ -783,6 +824,8 @@ public async Task<ActionResult> GetPreview(string ReffNo)
     }
 }
 
+// comment ini harus dihapus setelah dibaca!
+// parameter dari function ini berisi filter, kalo tidak ada sisakan MimeType saja
 [HttpGet("PrintDocumentAllType")]
 public async Task<ActionResult> PrintDocument(string MimeType, string ReffNo)
 {
@@ -798,7 +841,8 @@ public async Task<ActionResult> PrintDocument(string MimeType, string ReffNo)
 }
 ```
 
-> 💡 _Note_: Penggunaan `_internalAPIClient` hanya diperlukan jika ingin mengambil data dari modul lain.
+> 💡 _Note_:  
+> Jika ada kasus harus mengambil data dari module/service lain, bisa menggunakan `_internalAPIClient`.
 
 ---
 
