@@ -3,11 +3,11 @@
 ### Masuk/Login ke module Config - IFINSYS
 ### Cari halaman submenu Dashboard menu System Setting, click add untuk tambah data
 Ada beberapa bagian yang ada di halaman Master Dashboard Info
-1. General Info
+1. General Info  
 Di bagian form paling atas untuk informasi tentang dashboard secara general
-2. Chart Setting
+2. Chart Setting  
 Isinya konfigurasi chart yang menentukan gimana chartnya muncul dan apa aja yang muncul dengan chartnya.
-3. Data Source
+3. Data Source  
 Isinya untuk atur dari mana data dari API yang akan ditampilkan di chartnya. Ada 2 tipe source, Internal/External, pilih Internal jika ngambil dari API iFinancing, sesuaikan modulenya, untuk bagian 'API Module' diisi dengan nama controller dan nama routenya (format: '<ControllerName>/<RouteName>')
 
 ## Buat API-nya
@@ -18,8 +18,8 @@ Isinya untuk atur dari mana data dari API yang akan ditampilkan di chartnya. Ada
 ## Bagian UI
 ### Buat 1 component = 'DashboardCollectionComponent'
 - Buat folder 'DashboardCollectionComponent'
-- Buat file 'DashboardCollection.razor'
+- Buat file 'DashboardCollection.razor'  
 // kode
 
-- Buat file 'DashboardCollection.razor.cs'
+- Buat file 'DashboardCollection.razor.cs'  
 // kode
