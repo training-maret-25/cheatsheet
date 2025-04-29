@@ -287,12 +287,12 @@ Pages
 @page "/report/reporttransaction"
 ```
 
-![alt text](image-1.png)
+![alt text](/assets/img/report/route-search-bar.png)
 
 > Untuk ngambil route dimana bang?
 > Di config (IFINSYS) ada setting untuk menu
 
-## ![alt text](image-2.png)
+## ![alt text](/assets/img/report/parent-url.png)
 
 > Perhatiin juga URL menu si Parent (menu), jangan cuman Child (submenu) doang
 
