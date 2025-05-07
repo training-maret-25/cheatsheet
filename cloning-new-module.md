@@ -62,7 +62,7 @@ IFINAPV="http://147.139.191.88:7000/ifinapv/api/"
 📂 Buat file `.env` di dalam folder `/API` yang berada di root folder project:
 
 ```env
- DATABASE_TYPE=PostgreSQL
+  DATABASE_TYPE=PostgreSQL
  DATABASE_CONNECTION_STRING=Host=8.215.18.204;Username=postgres;Password=Nimda321;Database=[MODULE_NAME]
 
 # DATABASE_TYPE=SqlServer
@@ -87,10 +87,23 @@ FILE_STORAGE=Storage
 TOKEN_ISSUER=PT Inovasi Mitra Sejati
 TOKEN_AUDIENCE=iFinancing360
 
-IFINAPV=http://147.139.191.88:7000/ifinapv/api
-IFINSCR=http://147.139.191.88:7000/ifinscr/api
-IFINSVY=http://147.139.191.88:7000/ifinsvy/api
-IFINSYS=http://147.139.191.88:7000/ifinsys/api
+GOTENBERG=http://8.215.18.204:3000
+
+IFINBASE=http://147.139.191.88/api/
+IFINSYS=http://147.139.191.88:7000/ifinsys/api/
+IFINCORE=http://147.139.191.88:7000/ifincore/api/
+IFINCMS=http://147.139.191.88:7000/ifincms/api/
+IFINSLIK=http://147.139.191.88:7000/ifinslik/api/
+IFINSIPP=http://147.139.191.88:7000/ifinsipp/api/
+IFINLOS=http://147.139.191.88:7000/ifinlos/api/
+IFINDOC=http://147.139.191.88:7000/ifindoc/api/
+IFINSVY=http://147.139.191.88:7000/ifinsvy/api/
+IFINSCR=http://147.139.191.88:7000/ifinscr/api/
+IFINLGL=http://147.139.191.88:7000/ifinlgl/api/
+IFININS=http://147.139.191.88:7000/ifinins/api/
+IFINPBS=http://147.139.191.88:7000/ifinpbs/api/
+IFINPDC=http://147.139.191.88:7000/ifinpdc/api/
+IFINAPV=http://147.139.191.88:7000/ifinapv/api/
 ```
 **PERHATIKAN!**  
 `[MODULE_NAME]` diganti dengan nama module, cth: `IFINACC`
