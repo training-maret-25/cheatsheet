@@ -608,37 +608,55 @@ private async Task<List<FormControlsModel>> LoadFormControls(string formID)
 #endregion
 ```
 
-#### 3️⃣ Panggil Method Sebelumnya di `OnParameterSetAsync`
-
-Tambahkan pemanggilan method `LoadMasterForm` dan `LoadFormControls` pada `OnParameterSetAsync`. Jangan lupa untuk menambahkan `AddExtendProperty` dan `SetInitialValue`, seperti contoh berikut:
-
+#### buat method `DynamicFormSetup()`
+Buat method `DynamicFormSetup()` yang berisi pemanggilan method `LoadMasterForm` dan `LoadFormControls`. Jangan lupa untuk menambahkan `AddExtendProperty` dan `SetInitialValue`, seperti contoh berikut:
 ```csharp
-protected override async Task OnParameterSetAsync()
+#region DynamicFormSetup
+public async Task DynamicFormSetup()
 {
-  masterForm = await LoadMasterForm("CR");  // Ganti "CR" dengan code yang didaftarkan di Dynamic Form Setting.
-  // Di Dynamic Form Setting, Code diisi singkatan dari nama sub menu
-  // Code: diisi singkatan dari nama sub menu
-  // Name: nama submenu dengan format PascalCase (gaada spasi)
-  // Label: nama submenu tambah "Info"
+  /* [Hapus comment ini!!]
+    Ganti "CPI" dengan code yang didaftarkan di Dynamic Form Setting.
+    Di Dynamic Form Setting, Code diisi singkatan dari nama sub menu
+    Code: diisi singkatan dari nama sub menu
+    Name: nama submenu dengan format PascalCase (gaada spasi)
+    Label: nama submenu tambah "Info"
+  */
 
+  masterForm = await LoadMasterForm("CPI");
   controls = await LoadFormControls(masterForm["ID"]?.GetValue<string>());
 
-  if (ClientID != null)
+  if (!string.IsNullOrEmpty(ClientID))
   {
-    await GetRow();
+    var extRes = await [ModuleName]Client.GetRows<ExtendModel>([ControllerName], "GetRowByExt", new { ID = [ParentID] });
 
-    var extRes = await IFINCMSClient.GetRows<ExtendModel>("ClientPersonalInfo", "GetRowByExt", new { ID = ClientID });
-    extend = extRes?.Data;
+    extend = extRes?.Data ?? [];
 
     AddExtendProperty(controls, extend, row);
   }
-  else
-  {
-    row = new JsonObject();
-    row["Properties"] = JsonValue.Create(controls.ToDictionary(x => x.Name, x => x.Value));
-  }
 
   SetInitialValue(row, controls);
+}
+#endregion
+```
+
+#### 3️⃣ Panggil Method Sebelumnya di `OnParameterSetAsync()`
+
+Tambahkan pemanggilan method `DynamicFormSetup()` setelah pemanggilan `GetRow()`, seperti contoh berikut:
+
+```csharp
+/* [Hapus comment ini!]
+  Perhatikan:
+  - untuk logic di function ini yang sudah ada, jangan ada yang dihapus/ditambah jika tidak sesuai dengan instruksi, di method ini hanya menambahkan pemanggilan DynamicFormSetup()
+  - bagi yang melakukan refactor, perhatikan lagi function yang dihapus, jangan sampai itu mengubah/menghapus logic selain dynamic form setup
+*/
+protected override async Task OnParameterSetAsync()
+{
+  if (ClientID != null)
+  {
+    await GetRow();
+  }
+
+  await DynamicFormSetup(); // panggil di sini
   await base.OnInitializedAsync();
 }
 ```
@@ -648,6 +666,7 @@ protected override async Task OnParameterSetAsync()
 Tambahkan dynamic render untuk merender field secara dinamis:
 
 ```csharp
+// Taruh ini sebagai property dari class
 RenderFragment Form => builder =>
 {
     int seq = 0;
