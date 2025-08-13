@@ -52,6 +52,7 @@ CREATE TABLE form_controls (
   display_order int4 NULL,
   "name" varchar(50) NULL,
   numeric_format varchar(10) NULL,
+
   CONSTRAINT pk_form_controls_id PRIMARY KEY (id),
   CONSTRAINT fk_form_controls_master_form_id FOREIGN KEY (master_form_id) REFERENCES master_form(id)
 );
@@ -59,10 +60,11 @@ CREATE TABLE form_controls (
 
 #### 2️⃣ Buat tabel extension(ext) dari tabel header
 
-Buat berdasarkan form/header yang akan meng-implement fitur ini. Format nama table: `[header_table_name]_ext`, contoh: menu "Client Personal Info" (table: `client_personal_info_ext`)
+Buat berdasarkan form/header yang akan meng-implement fitur ini.  
+Format nama table: `[header_table_name] _ext`, contoh: menu "Client Personal Info"(table: `client_personal_info_ext`)
 
 ```sql
-CREATE TABLE [header_table_name]_ext (
+CREATE TABLE [header_table_name] _ext (
   id varchar(50) NOT NULL,
   cre_date timestamp NOT NULL,
   cre_by varchar(15) NOT NULL,
@@ -71,12 +73,12 @@ CREATE TABLE [header_table_name]_ext (
   mod_by varchar(15) NOT NULL,
   mod_ip_address varchar(15) NOT NULL,
   --
-  [header_table_name]_id varchar(50) NOT NULL,
+  [header_table_name] _id varchar(50) NOT NULL,
   "keyy" varchar(50) NULL,
   value varchar(50) NULL,
   --
-  CONSTRAINT pk_[header_table_name]_ext_id PRIMARY KEY (id),
-  CONSTRAINT fk_[header_table_name]_ext_masterbencmark_id FOREIGN KEY ([header_table_name]_id) REFERENCES [header_table_name](id)
+  CONSTRAINT pk_[header_table_name] _ext_id PRIMARY KEY (id),
+  CONSTRAINT fk_[header_table_name] _ext_[header_table_name]_id FOREIGN KEY ([header_table_name] _id) REFERENCES[header_table_name](id)
 );
 ```
 
@@ -142,22 +144,33 @@ namespace Domain.Models
     public string? Key { get; set; }
     public string? Value { get; set; }
     public string? ParentID { get; set; }
+    public string? JSONProperties { get; set; }
     public dynamic? Properties { get; set; } = new ExpandoObject();
 
     public void AddProperty(string propertyName, object value)
     {
-      ((IDictionary<string, object>)Properties)[propertyName] = value;
+      if (Properties is IDictionary<string, object> dict)
+      {
+        dict[propertyName] = value;
+      }
+      else
+      {
+        throw new InvalidOperationException("Properties must be a dictionary of string keys and object values.");
+      }
     }
 
     public object GetProperty(string propertyName)
     {
-      if (((IDictionary<string, object>)Properties).ContainsKey(propertyName))
+      if (Properties is IDictionary<string, object> dict)
       {
-        return ((IDictionary<string, object>)Properties)[propertyName];
+        if (dict.TryGetValue(propertyName, out var? value))
+          return value;
+        else
+          throw new Exception($"Property {propertyName} doesn't exist");
       }
       else
       {
-        throw new Exception($"Property {propertyName} does not exist");
+        throw new Exception($"Properties is not a supported type.");
       }
     }
   }
@@ -213,13 +226,13 @@ using System.Data;
 
 namespace Domain.Abstract.Repository
 {
-  public interface I[HeaderTableName]ExtRepository : IBaseExtRepository<ExtendModel> { }
+  public interface I[HeaderTableName] ExtRepository : IBaseExtRepository<ExtendModel> { }
 }
 ```
 
 #### 5️⃣ Method `GetRowForParent`
 
-Tambahkan method `GetRowForParent` pada **interface service** dari header yang berada di `Domain/Abstract/Service`. Contoh : service `ClientPersonalInfoService`
+Tambahkan method `GetRowForParent` pada **interface service**dari header yang berada di `Domain/Abstract/Service`. Contoh : service `ClientPersonalInfoService`
 
 ```csharp
 using Domain.Models;
@@ -239,7 +252,7 @@ namespace Domain.Abstract.Service
 
 ### 📂 Data Access Layer (DAL) / Repository
 
-Buat **class repository** sebagai ekstensi dari tabel header dengan format nama `[HeaderTableName]ExtRepository` (contoh: `ClientPersonalInfoExtRepository`). Letakkan class ini di folder `DAL/` dan implementasikan interface yang telah kita buat sebelumnya.
+Buat **class repository**sebagai ekstensi dari tabel header dengan format nama `[HeaderTableName] ExtRepository` (contoh: `ClientPersonalInfoExtRepository`). Letakkan class ini di folder `DAL/` dan implementasikan interface yang telah kita buat sebelumnya.
 
 ```csharp
 using System.Data;
@@ -321,7 +334,7 @@ namespace DAL
     {
       var p = db.Symbol();
 
-      string query = $@"
+    string query = $@"
         update {tableName}
         set
           mod_date        = {p}ModDate
@@ -335,9 +348,9 @@ namespace DAL
           keyy = {p}Keyy";
 
       return await _command.Update(transaction, query, model);
-    }
-    #endregion
   }
+  #endregion
+}
 }
 
 ```
@@ -348,7 +361,7 @@ namespace DAL
 
 #### 1️⃣ Buat `InsertExt`, `UpdateExt`, dan `GetRowForParent`
 
-Tambahkan pada **service** header yang meng-_implement_ fitur Dynamic From ini. `InsertExt` dan `UpdateExt` dibuat sebagai private method dan `GetRowForParent` diimplementasikan sesuai dengan interface.
+Tambahkan pada** service** header yang meng-_implement_ fitur Dynamic From ini. `InsertExt` dan `UpdateExt` dibuat sebagai private method dan `GetRowForParent` diimplementasikan sesuai dengan interface.
 
 -   `InsertExt()`
 
@@ -499,6 +512,7 @@ public async Task<int> Insert(...)
     var tempProperties = model.Properties;
 
     model.Properties = null;
+    model.JSONProperties = null;
 
     await InsertExt(transaction, tempProperties, model); // Panggil InsertExt()
 
@@ -531,7 +545,9 @@ public async Task<int> UpdateByID(...)
     var extProperties = await _repoExt.GetRowForParent(transaction, model.ID!);
 
     var tempProperties = model.Properties;
+
     model.Properties = null;
+    model.JSONProperties = null;
 
     await UpdateExt(transaction, tempProperties, extProperties, model); // Panggil UpdateExt()
 
@@ -576,7 +592,7 @@ public async Task<ActionResult> GetRowByExt(string ID)
 
 #### 1️⃣ Tambahkan Properti pada UI Logic Class dari Form Component
 
-Tambahkan properti berikut pada UI logic class dari form component (`[HeaderTableName]Form.cs`):
+Tambahkan properti berikut pada UI logic class dari form component(`[HeaderTableName] Form.cs`):
 
 ```csharp
 #region Variables
@@ -588,6 +604,8 @@ List<ExtendModel>? extend = new();
 #endregion
 ```
 
+---
+
 #### 2️⃣ Tambahkan Method untuk Mengambil Data Dynamic Form
 
 Tambahkan method berikut untuk mengambil data dari dynamic form beserta valuenya:
@@ -596,20 +614,24 @@ Tambahkan method berikut untuk mengambil data dari dynamic form beserta valuenya
 #region Load data for Dynamic Form
 private async Task<JsonObject> LoadMasterForm(string code)
 {
-    var res = await IFINCMSClient.GetRow<JsonObject>("MasterForm", "GetRowByCode", new { Code = code });
-    return res?.Data ?? [];
+  var res = await IFINCMSClient.GetRow<JsonObject>("MasterForm", "GetRowByCode", new { Code = code });
+  return res?.Data ?? [];
 }
 
 private async Task<List<FormControlsModel>> LoadFormControls(string formID)
 {
-    var res = await IFINCMSClient.GetRows<FormControlsModel>("FormControls", "GetRows", new { MasterFormID = formID });
-    return res?.Data ?? [];
+  var res = await IFINCMSClient.GetRows<FormControlsModel>("FormControls", "GetRows", new { MasterFormID = formID });
+  return res?.Data ?? [];
 }
 #endregion
 ```
 
-#### buat method `DynamicFormSetup()`
+---
+
+#### 3️⃣ Buat method `DynamicFormSetup()`
+
 Buat method `DynamicFormSetup()` yang berisi pemanggilan method `LoadMasterForm` dan `LoadFormControls`. Jangan lupa untuk menambahkan `AddExtendProperty` dan `SetInitialValue`, seperti contoh berikut:
+
 ```csharp
 #region DynamicFormSetup
 public async Task DynamicFormSetup()
@@ -639,7 +661,9 @@ public async Task DynamicFormSetup()
 #endregion
 ```
 
-#### 3️⃣ Panggil Method Sebelumnya di `OnParameterSetAsync()`
+---
+
+#### 4️⃣ Panggil Method Sebelumnya di `OnParameterSetAsync()`
 
 Tambahkan pemanggilan method `DynamicFormSetup()` setelah pemanggilan `GetRow()`, seperti contoh berikut:
 
@@ -661,7 +685,9 @@ protected override async Task OnParameterSetAsync()
 }
 ```
 
-#### 4️⃣ Tambahkan Dynamic Render
+---
+
+#### 5️⃣ Tambahkan Dynamic Render
 
 Tambahkan dynamic render untuk merender field secara dinamis:
 
@@ -669,18 +695,28 @@ Tambahkan dynamic render untuk merender field secara dinamis:
 // Taruh ini sebagai property dari class
 RenderFragment Form => builder =>
 {
-    int seq = 0;
+  int seq = 0;
 
-    foreach (var control in controls)
-    {
-        DynamicRenderForm(builder, ref seq, control);
-    }
+  foreach (var control in controls)
+  {
+    DynamicRenderForm(builder, ref seq, control);
+  }
 };
 ```
 
-#### 5️⃣ Tambahkan `SetExtensionProperties` di Method `OnSubmit`
+---
 
-Pada method `OnSubmit`, tambahkan pemanggilan method `SetExtensionProperties`, seperti contoh berikut:
+#### 6️⃣ Menambahkan `SetExtensionProperties` di Method `OnSubmit`
+
+`SetExtensionProperties` digunakan untuk menambahkan properti ekstensi (`Properties`) pada data yang akan dikirim ke API.
+Pemanggilan method ini harus disesuaikan dengan jenis HTTP client yang digunakan:
+
+* **Bukan `*AsClient`** → panggil tanpa parameter `httpAsClient`.
+* **`*AsClient`** → panggil dengan parameter `httpAsClient: true`.
+
+**Kasus 1 — Semua HTTP Client Sama Jenisnya**
+
+Jika seluruh request menggunakan tipe yang sama (`*AsClient` atau bukan), pemanggilan `SetExtensionProperties` cukup dilakukan sekali sebelum request.
 
 ```csharp
 private async void OnSubmit(JsonObject data)
@@ -690,19 +726,30 @@ private async void OnSubmit(JsonObject data)
     data = SetAuditInfo(data);
     data = row.Merge(data);
 
-    SetExtensionProperties(data, controls, "Properties"); // Tambahkan function ini
+    // Contoh bukan *AsClient
+    SetExtensionProperties(data, controls, "Properties");
+
+    // Contoh *AsClient
+    // SetExtensionProperties(data, controls, "Properties", httpAsClient: true);
 
     if (ClientID != null)
     {
+        // Contoh bukan PutAsClient
         var res = await IFINCMSClient.Put("ClientPersonalInfo", "UpdateByID", data);
 
-        if (res != null) isLoading = false;
+        // Contoh PutAsClient
+        // var res = await IFINCMSClient.PutAsClient("ClientPersonalInfo", "UpdateByID", data);
 
+        if (res != null) isLoading = false;
         StateHasChanged();
     }
     else
     {
+        // Contoh bukan PostAsClient
         var res = await IFINCMSClient.Post("ClientPersonalInfo", "Insert", data);
+
+        // Contoh PostAsClient
+        // var res = await IFINCMSClient.PostAsClient("ClientPersonalInfo", "Insert", data);
 
         if (res.Data != null)
             NavigationManager.NavigateTo($"/client/clientregister/{res.Data["ID"]}");
@@ -713,24 +760,72 @@ private async void OnSubmit(JsonObject data)
 }
 ```
 
-#### 6️⃣ Tambahkan Variabel untuk Dynamic Form di `.razor`
+**Kasus 2 — HTTP Client Berbeda di Setiap Kondisi**
+
+Jika salah satu kondisi (`Update` atau `Insert`) menggunakan `*AsClient` dan yang lain tidak, maka `SetExtensionProperties` harus dipanggil **di masing-masing blok** sesuai jenis client yang digunakan.
+
+```csharp
+private async void OnSubmit(JsonObject data)
+{
+    isLoading = true;
+
+    data = SetAuditInfo(data);
+    data = row.Merge(data);
+
+    if (ClientID != null)
+    {
+        // Bukan *AsClient
+        SetExtensionProperties(data, controls, "Properties");
+
+        var res = await IFINCMSClient.Put("ClientPersonalInfo", "UpdateByID", data);
+
+        if (res != null) isLoading = false;
+        StateHasChanged();
+    }
+    else
+    {
+        // *Asclient
+        SetExtensionProperties(data, controls, "Properties", httpAsClient: true);
+
+        var res = await IFINCMSClient.PostAsClient("ClientPersonalInfo", "Insert", data);
+
+        if (res.Data != null)
+            NavigationManager.NavigateTo($"/client/clientregister/{res.Data["ID"]}");
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}
+```
+
+
+📌 **Catatan Penting**
+
+* Selalu panggil `SetExtensionProperties` **sebelum** request API dijalankan.
+* Gunakan `httpAsClient: true` hanya jika request dijalankan dengan metode `*AsClient`.
+* Jika dalam satu method `OnSubmit` ada kombinasi `*AsClient` dan bukan `*AsClient`, panggil `SetExtensionProperties` terpisah di masing-masing blok.
+
+---
+
+#### 7️⃣ Tambahkan Variabel untuk Dynamic Form di `.razor`
 
 Tambahkan kode berikut di file `.razor` untuk membuat dynamic form secara otomatis:
 
 ```razor
 @if (controls?.Count > 0)
 {
-    <hr style="border: none; border-top: 2px solid var(--ifinancing-color-primary); margin: 20px 0;" />
+  <hr style="border: none; border-top: 2px solid var(--ifinancing-color-primary); margin: 20px 0;" />
 
-    <RadzenStack Gap="8" Style="margin-top: 1rem;">
-        <RadzenRow Gap="32" Style="margin-bottom: 5rem;">
-            @Form
-        </RadzenRow>
-    </RadzenStack>
+  <RadzenStack Gap="8" Style="margin-top: 1rem;">
+    <RadzenRow Gap="32" Style="margin-bottom: 5rem;">
+      @Form
+    </RadzenRow>
+  </RadzenStack>
 }
 ```
+---
 
-#### 7️⃣ Tambahkan Button untuk Menuju Halaman Pengaturan Dynamic Form
+#### 8 Tambahkan Button untuk Menuju Halaman Pengaturan Dynamic Form
 
 Tambahkan tombol untuk mengarahkan pengguna ke halaman pengaturan Dynamic Form:
 
@@ -744,8 +839,8 @@ Tambahkan juga method berikut untuk menangani navigasi ke halaman pengaturan Dyn
 #region Go to Dynamic Form Setting
 private void GoToSetting()
 {
-    string masterFormID = masterForm["ID"]?.GetValue<string>();
-    NavigationManager.NavigateTo($"setting/dynamicform/{masterFormID}");
+  string masterFormID = masterForm["ID"]?.GetValue<string>();
+  NavigationManager.NavigateTo($"setting/dynamicform/{masterFormID}");
 }
 #endregion
 ```
@@ -773,6 +868,6 @@ Bagian ini menjelaskan cara mendaftarkan **Role Code** untuk **button** di siste
    ![Role Code Field](assets/img/role-code-field.png)
 9. **Tempelkan** Role Code yang sudah disalin ke dalam kode sebagai berikut:
 
-    ```razor
-    <RoleAccess Code="RC0001983"> ... </RoleAccess>
-    ```
+```razor
+<RoleAccess Code="RC0001983"> ... </RoleAccess>
+```
